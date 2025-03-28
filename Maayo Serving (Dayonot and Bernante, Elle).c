@@ -24,17 +24,18 @@ struct Appointment
 };
 struct Appointment* patientAppointment = NULL;
 
-void takeinput(char ch[50]);
-void takepassword(char pwd[50]);
-void generateUsername(char email[50], char username[50]);
-void displayRegisterMenu();
-void registerPatient();
-void registerDoctor();
-void logIn();
-void patientDashboard(char username[50]);
-void doctorDashBoard(char username[50]);
-void viewprofile(char username[50]);
-void createAppointment(char username[50]);
+void takeinput(char ch[50]); //Handles user input and removes trailing newline characters
+void takepassword(char pwd[50]); //Reads password input while masking characters with *
+void generateUsername(char email[50], char username[50]); //Extracts the username from the email before the @ symbol
+void displayRegisterMenu(); //Displays the registration and login menu
+void registerUser(const char *filename); //Registers a user (patient or doctor) and stores details in a file
+void registerPatient(); //Registers a patient and placing it in the correct file
+void registerDoctor(); //Registers a doctor and placing it in the correct file
+void logIn(); //Handles user login by validating credentials from the files
+void patientDashboard(char username[50]); //Displays patient options (view profile, schedule/view appointments)
+void doctorDashBoard(char username[50]); //Displays doctor options (view profile, view/manage appointments)
+void viewprofile(char username[50]); //Displays patient profile details(history, existing conditions)
+void createAppointment(char username[50]); //Allows a patient to schedule an appointment
 
 int main()
 {
