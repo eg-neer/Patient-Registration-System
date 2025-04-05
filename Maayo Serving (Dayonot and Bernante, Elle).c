@@ -492,22 +492,23 @@ void viewAppointment(char username[50]) {
     int found = 0;
 
     while (fscanf(fp, "%49[^,],%49[^,],%49[^,],%49[^,],%49[^\n]\n",
-                  doctor.fullName, doctor.email, doctor.phone, doctor.username, doctor.password) != EOF) {
+                  doctor.fullName, doctor.email, doctor.phone, 
+			   doctor.username, doctor.password) != EOF) {
         
-        sprintf(doctorFileName, "Dr_%s.txt", doctor.fullName);
+  	   	sprintf(doctorFileName, "Dr_%s.txt", doctor.fullName);
 
-        FILE *doctorFile = fopen(doctorFileName, "r");
-        if (doctorFile == NULL) {
-            continue; // Skip if file does not exist
-        }
+	     FILE *doctorFile = fopen(doctorFileName, "r");
+	     if (doctorFile == NULL) {
+	        continue; // Skip if file does not exist
+	     }
 
-        char line[100];
-        char storedUsername[50];
-        char storedDate[20];
-        char storedTime[10];
-        char status[20] = "In Process"; // Default status
+	char line[100];
+	char storedUsername[50];
+	char storedDate[20];
+     char storedTime[10];
+     char status[20] = "In Process"; // Default status
 		
-		system("cls");
+	system("cls");
         while (fgets(line, sizeof(line), doctorFile)) {
             if (sscanf(line, "Patient: %49[^\n]", storedUsername) == 1 && strcmp(storedUsername, username) == 0) {
                 fgets(line, sizeof(line), doctorFile); // Read Date
@@ -539,10 +540,10 @@ void viewAppointment(char username[50]) {
     if (!found) {
         printf("\nNo appointment scheduled.\n");
     }
+    
     printf("Click 1 to return to Dashboard: ");
     scanf("%d", &click);
-    if(click == 1)
-    {
-    	patientDashboard(username);
-	}
+    if(click == 1){
+    		patientDashboard(username);
+    }
 }
