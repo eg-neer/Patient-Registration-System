@@ -15,8 +15,7 @@ struct User{
 	char phone[50];
 };
 
-struct Appointment
-{
+struct Appointment{
 	char doctorName[50];
 	char date[20];
 	char time[10];
@@ -38,8 +37,7 @@ void viewAppointment(char username[50]); //Checks Status of the Appointment
 void doctorDashBoard(char username[50]); //Displays doctor options
 void viewDoctorprofile(char username[50]); //Displays doctor profile
 
-int main()
-{
+int main(){
 	int choice;
 	
 	do{
@@ -107,8 +105,7 @@ void generateUsername(char email[50], char username[50]){
 	username[i] = '\0';
 }
 
-void displayRegisterMenu()
-{
+void displayRegisterMenu(){
 	system("cls");
 	printf("\t|------------------WELCOME TO MaAyo Serving-------------------|\n");
 	printf("\t|-------------------------------------------------------------|\n");
@@ -296,8 +293,7 @@ void registerDoctor() {
     registerUser("Doctors.txt");
 }
 
-void viewprofile(char username[50])
-{
+void viewprofile(char username[50]){
 	struct User user;
 	int click;
 	FILE *fp;
@@ -337,8 +333,7 @@ void viewprofile(char username[50])
 	}
 }
 
-void viewDoctorprofile(char username[50])
-{
+void viewDoctorprofile(char username[50]){
 	struct User user;
 	int click;
 	FILE *fp;
@@ -387,14 +382,13 @@ void viewDoctorprofile(char username[50])
 }
 
 
-void createAppointment(char username[50])
-{
-	int click;
-    if (patientAppointment != NULL) {
-        printf("\nYou already have an appointment scheduled with Dr. %s on %s at %s.\n", 
-               patientAppointment->doctorName, patientAppointment->date, patientAppointment->time);
-        return;
-    }
+void createAppointment(char username[50]){
+ 	int click;
+    	if (patientAppointment != NULL) {
+        	printf("\nYou already have an appointment scheduled with Dr. %s on %s at %s.\n", 
+         	patientAppointment->doctorName, patientAppointment->date, patientAppointment->time);
+        	return;
+    	}
 
     FILE *fp = fopen("Doctors.txt", "r");
     if (fp == NULL) {
