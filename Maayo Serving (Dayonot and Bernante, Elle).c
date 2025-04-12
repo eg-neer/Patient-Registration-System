@@ -6,6 +6,7 @@
 #define ENTER 13
 #define TAB 9
 #define BCKSPC 8
+#define MAX_APPOINTMENTS 50
 
 struct User{
 	char fullName[50];
@@ -17,10 +18,13 @@ struct User{
 
 struct Appointment{
 	char doctorName[50];
+	char patientName[50];
 	char date[20];
 	char time[10];
+	char agenda[200];
 	struct Appointment* next;
 };
+
 struct Appointment* patientAppointment = NULL;
 
 void takeinput(char ch[50]); //Handles user input and removes trailing newline characters
@@ -36,9 +40,17 @@ void createAppointment(char username[50]); //Allows a patient to schedule an app
 void viewAppointment(char username[50]); //Checks Status of the Appointment
 void doctorDashBoard(char username[50]); //Displays doctor options
 void viewDoctorprofile(char username[50]); //Displays doctor profile
+void patientHistory(char patientName[50]); // to be implemented
+void displayAllDoctors(); //to be implemented
+void loadFiles(); //to be implemented
+//void updateFiles(); // to be implemented
+//insert functions to validate user inputs here
+
 
 int main(){
 	int choice;
+	
+	//loadFiles(); //load files on startup
 	
 	do{
 		displayRegisterMenu();
@@ -62,6 +74,10 @@ int main(){
 				printf("\nInvalid choice! Please try again.\n");
 		}
 	} while (choice != 4);
+	
+	
+	//updateFile(); //save all before exiting
+	
 	
 	return 0;
 }
@@ -540,4 +556,74 @@ void viewAppointment(char username[50]) {
     if(click == 1){
     		patientDashboard(username);
     }
+}
+
+void patientHistory(char patientName[50]){
+	FILE *patientFile;
+    char line[200];
+    int found = 0;
+
+    patientFile = fopen("Patients.txt", "r");
+    if (patientFile == NULL) {
+        printf("Error: Could not open patient records file.\n");
+        return;
+    }
+
+    // Search through the file to find the patient record
+    while (fgets(line, sizeof(line), patientFile)) {
+        if (strstr(line, patientName) != NULL) { // Check if patientName exists in the line
+            printf("Patient History for %s:\n", patientName);
+            printf("%s", line);  // You may need to improve this to display full history details
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("No history found for patient %s.\n", patientName);
+    }
+
+    fclose(patientFile);
+} 
+
+void displayAllDoctors(){
+	FILE *doctorFile;
+    char line[200];
+
+    doctorFile = fopen("Doctors.txt", "r");
+    if (doctorFile == NULL) {
+        printf("Error: Could not open doctors' file.\n");
+        return;
+    }
+
+    printf("List of all Doctors:\n");
+
+    // Read and display doctor information
+    while (fgets(line, sizeof(line), doctorFile)) {
+        printf("%s", line);  // Display doctor details from the file
+    }
+
+    fclose(doctorFile);
+}
+
+void loadFiles(){
+	FILE *patientFile, *doctorFile;
+
+    // Open patients file
+    patientFile = fopen("Patients.txt", "r");
+    if (patientFile == NULL) {
+        printf("Error: Could not open patient records file.\n");
+        return;
+    }
+
+    fclose(patientFile);
+
+    // Open doctors file
+    doctorFile = fopen("Doctors.txt", "r");
+    if (doctorFile == NULL) {
+        printf("Error: Could not open doctors' file.\n");
+        return;
+    }
+
+    fclose(doctorFile);
 }
