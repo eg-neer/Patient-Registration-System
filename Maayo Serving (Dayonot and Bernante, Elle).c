@@ -31,17 +31,18 @@ void takeinput(char ch[50]); //Handles user input and removes trailing newline c
 void takepassword(char pwd[50]); //Reads password input while masking characters with *
 void generateUsername(char email[50], char username[50]); //Extracts the username from the email before the @ symbol
 void displayRegisterMenu(); //Displays the registration and login menu
+void registerUser(const char *filename);
 void registerPatient(); //Registers a patient and placing it in the correct file
 void registerDoctor(); //Registers a doctor and placing it in the correct file
 void logIn(); //Handles user login by validating credentials from the files
 void patientDashboard(char username[50]); //Displays patient options (view profile, schedule/view appointments)
 void viewprofile(char username[50]); //Displays patient profile details(history, existing conditions)
 void createAppointment(char username[50]); //Allows a patient to schedule an appointment
+void displayAllDoctors(); //to be implemented
+void patientHistory(char patientName[50]); // to be implemented
 void viewAppointment(char username[50]); //Checks Status of the Appointment
 void doctorDashBoard(char username[50]); //Displays doctor options
 void viewDoctorprofile(char username[50]); //Displays doctor profile
-void patientHistory(char patientName[50]); // to be implemented
-void displayAllDoctors(); //to be implemented
 void loadFiles(); //to be implemented
 //void updateFiles(); // to be implemented
 //insert functions to validate user inputs here
@@ -131,71 +132,43 @@ void displayRegisterMenu(){
     printf("\t|-------------------------------------------------------------|\n");
 }
 
-void patientDashboard(char username[50]) {
-    int choice;
-    
-    do {
-    	system("cls");
-        printf("\n---------------- Patient Dashboard ----------------\n");
-        printf("1. View Profile\n");
-        printf("2. Schedule an Appointment\n");
-        printf("3. View Appointments\n");
-        printf("4. Log Out\n");
-        printf("Select an option: ");
-        scanf("%d", &choice);
-        while(getchar() != '\n');
-		//system("cls");
-		
-        switch (choice) {
-            case 1:
-                viewprofile(username);
-                break;
-            case 2:
-                createAppointment(username);
-				break;
-            case 3:
-                viewAppointment(username);
-                break;
-            case 4:
-                printf("\nLogging out...\n");
-                return;
-            default:
-                printf("\nInvalid choice! Please try again.\n");
+void registerUser(const char *filename) {
+    FILE *fp;
+    struct User user;
+    char password2[50];
+
+    printf("Enter your full name: ");
+    takeinput(user.fullName);
+    printf("Enter your email: ");
+    takeinput(user.email);
+    printf("Enter your contact no: ");
+    takeinput(user.phone);
+    printf("Enter your password: ");
+    takepassword(user.password);
+    printf("\nConfirm your password: ");
+    takepassword(password2);
+
+    if (strcmp(user.password, password2) == 0) {
+        generateUsername(user.email, user.username);
+        fp = fopen(filename, "a");
+        if (fp == NULL) {
+            printf("\nError opening file!\n");
+            return;
         }
-    } while (choice != 4);
+        fprintf(fp, "%s,%s,%s,%s,%s\n", user.fullName, user.email, user.phone, user.username, user.password);
+        fclose(fp);
+        printf("\nUser registration successful! Your username is %s\n", user.username);
+    } else {
+        printf("\nPasswords do not match!\n");
+    }
 }
 
-void doctorDashBoard(char username[50]) { // Ensure name matches function call
-    int choice;
-    
-    do {
-    	system("cls");
-        printf("\n---------------- Doctor Dashboard ----------------\n");
-        printf("1. View Profile\n");
-        printf("2. View Appointments\n");
-        printf("3. Manage Appointments (Accept/Decline)\n");
-        printf("4. Log Out\n");
-        printf("Select an option: ");
-        scanf("%d", &choice);
-        while(getchar() != '\n'); // Clear buffer
+void registerPatient() {
+    registerUser("Patients.txt");
+}
 
-        switch (choice) {
-            case 1:
-            	viewDoctorprofile(username); 
-    			break;
-            case 2:
-                printf("\nFetching appointment data...\n");
-                break;
-            case 3:
-                printf("\nAppointment management feature coming soon!\n");
-                break;
-            case 4:
-                printf("\nLogging out...\n");
-                return;
-            default:
-                printf("\nInvalid choice! Please try again.\n");
-        }
-    } while (choice != 4);
+void registerDoctor() {
+    registerUser("Doctors.txt");
 }
 
 void logIn() {
@@ -269,44 +242,38 @@ void logIn() {
     }
 }
 
-
-void registerUser(const char *filename) {
-    FILE *fp;
-    struct User user;
-    char password2[50];
-
-    printf("Enter your full name: ");
-    takeinput(user.fullName);
-    printf("Enter your email: ");
-    takeinput(user.email);
-    printf("Enter your contact no: ");
-    takeinput(user.phone);
-    printf("Enter your password: ");
-    takepassword(user.password);
-    printf("\nConfirm your password: ");
-    takepassword(password2);
-
-    if (strcmp(user.password, password2) == 0) {
-        generateUsername(user.email, user.username);
-        fp = fopen(filename, "a");
-        if (fp == NULL) {
-            printf("\nError opening file!\n");
-            return;
+void patientDashboard(char username[50]) {
+    int choice;
+    
+    do {
+    	system("cls");
+        printf("\n---------------- Patient Dashboard ----------------\n");
+        printf("1. View Profile\n");
+        printf("2. Schedule an Appointment\n");
+        printf("3. View Appointments\n");
+        printf("4. Log Out\n");
+        printf("Select an option: ");
+        scanf("%d", &choice);
+        while(getchar() != '\n');
+		//system("cls");
+		
+        switch (choice) {
+            case 1:
+                viewprofile(username);
+                break;
+            case 2:
+                createAppointment(username);
+				break;
+            case 3:
+                viewAppointment(username);
+                break;
+            case 4:
+                printf("\nLogging out...\n");
+                return;
+            default:
+                printf("\nInvalid choice! Please try again.\n");
         }
-        fprintf(fp, "%s,%s,%s,%s,%s\n", user.fullName, user.email, user.phone, user.username, user.password);
-        fclose(fp);
-        printf("\nUser registration successful! Your username is %s\n", user.username);
-    } else {
-        printf("\nPasswords do not match!\n");
-    }
-}
-
-void registerPatient() {
-    registerUser("Patients.txt");
-}
-
-void registerDoctor() {
-    registerUser("Doctors.txt");
+    } while (choice != 4);
 }
 
 void viewprofile(char username[50]){
@@ -348,55 +315,6 @@ void viewprofile(char username[50]){
     	patientDashboard(username);
 	}
 }
-
-void viewDoctorprofile(char username[50]){
-	struct User user;
-	int click;
-	FILE *fp;
-	fp = fopen("Doctors.txt", "r");
-
-	int found = 0;
-	while (fscanf(fp, "%49[^,],%49[^,],%49[^,],%49[^,],%49[^\n]\n",
-                  user.fullName, user.email, user.phone, user.username, user.password) != EOF) {
-        if (strcmp(user.username, username) == 0) {
-            found = 1;
-            break; 
-        }
-    }
-    fclose(fp);
-
-    if(!found)
-    {
-    	printf("\nError: User profile not found!\n");
-    	return;
-	}
-
-	system("cls");
-    printf("\t|-----------------------Doctor Profile-----------------------|\n");
-    printf("\t|-------------------------------------------------------------|\n");
-    printf("\t                                                               \n");
-    printf("\t                        Fullname: [%s]\n", user.fullName);
-    printf("\t                           Email: [%s]\n", user.email);
-    printf("\t                           Phone: [%s]\n", user.phone);
-    printf("\t                        Username: [%s]\n", user.username);
-    printf("\t                        Password: [%s]\n", user.password);
-    printf("\n");
-    printf("\t|-------------------------------------------------------------|\n");
-
-    printf("Click 1 to return to Dashboard: ");
-    scanf("%d", &click);
-    while(getchar() != '\n'); // Clear input buffer
-
-    if(click == 1)
-    {
-    	doctorDashBoard(username);  // Ensure this matches exactly!
-	}
-
-    // Pause before exiting function to avoid instant screen clear
-    printf("\nPress Enter to continue...");
-    while(getchar() != '\n'); // Wait for Enter key
-}
-
 
 void createAppointment(char username[50]){
  	int click;
@@ -487,6 +405,54 @@ void createAppointment(char username[50]){
 	}
 }
 
+void displayAllDoctors(){
+	FILE *doctorFile;
+    char line[200];
+
+    doctorFile = fopen("Doctors.txt", "r");
+    if (doctorFile == NULL) {
+        printf("Error: Could not open doctors' file.\n");
+        return;
+    }
+
+    printf("List of all Doctors:\n");
+
+    // Read and display doctor information
+    while (fgets(line, sizeof(line), doctorFile)) {
+        printf("%s", line);  // Display doctor details from the file
+    }
+
+    fclose(doctorFile);
+}
+
+void patientHistory(char patientName[50]){
+	FILE *patientFile;
+    char line[200];
+    int found = 0;
+
+    patientFile = fopen("Patients.txt", "r");
+    if (patientFile == NULL) {
+        printf("Error: Could not open patient records file.\n");
+        return;
+    }
+
+    // Search through the file to find the patient record
+    while (fgets(line, sizeof(line), patientFile)) {
+        if (strstr(line, patientName) != NULL) { // Check if patientName exists in the line
+            printf("Patient History for %s:\n", patientName);
+            printf("%s", line);  // You may need to improve this to display full history details
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("No history found for patient %s.\n", patientName);
+    }
+
+    fclose(patientFile);
+} 
+
 void viewAppointment(char username[50]) {
     char doctorFileName[60];
     int click;
@@ -558,52 +524,85 @@ void viewAppointment(char username[50]) {
     }
 }
 
-void patientHistory(char patientName[50]){
-	FILE *patientFile;
-    char line[200];
-    int found = 0;
+void doctorDashBoard(char username[50]) { // Ensure name matches function call
+    int choice;
+    
+    do {
+    	system("cls");
+        printf("\n---------------- Doctor Dashboard ----------------\n");
+        printf("1. View Profile\n");
+        printf("2. View Appointments\n");
+        printf("3. Manage Appointments (Accept/Decline)\n");
+        printf("4. Log Out\n");
+        printf("Select an option: ");
+        scanf("%d", &choice);
+        while(getchar() != '\n'); // Clear buffer
 
-    patientFile = fopen("Patients.txt", "r");
-    if (patientFile == NULL) {
-        printf("Error: Could not open patient records file.\n");
-        return;
-    }
+        switch (choice) {
+            case 1:
+            	viewDoctorprofile(username); 
+    			break;
+            case 2:
+                printf("\nFetching appointment data...\n");
+                break;
+            case 3:
+                printf("\nAppointment management feature coming soon!\n");
+                break;
+            case 4:
+                printf("\nLogging out...\n");
+                return;
+            default:
+                printf("\nInvalid choice! Please try again.\n");
+        }
+    } while (choice != 4);
+}
 
-    // Search through the file to find the patient record
-    while (fgets(line, sizeof(line), patientFile)) {
-        if (strstr(line, patientName) != NULL) { // Check if patientName exists in the line
-            printf("Patient History for %s:\n", patientName);
-            printf("%s", line);  // You may need to improve this to display full history details
+void viewDoctorprofile(char username[50]){
+	struct User user;
+	int click;
+	FILE *fp;
+	fp = fopen("Doctors.txt", "r");
+
+	int found = 0;
+	while (fscanf(fp, "%49[^,],%49[^,],%49[^,],%49[^,],%49[^\n]\n",
+                  user.fullName, user.email, user.phone, user.username, user.password) != EOF) {
+        if (strcmp(user.username, username) == 0) {
             found = 1;
-            break;
+            break; 
         }
     }
+    fclose(fp);
 
-    if (!found) {
-        printf("No history found for patient %s.\n", patientName);
-    }
+    if(!found)
+    {
+    	printf("\nError: User profile not found!\n");
+    	return;
+	}
 
-    fclose(patientFile);
-} 
+	system("cls");
+    printf("\t|-----------------------Doctor Profile-----------------------|\n");
+    printf("\t|-------------------------------------------------------------|\n");
+    printf("\t                                                               \n");
+    printf("\t                        Fullname: [%s]\n", user.fullName);
+    printf("\t                           Email: [%s]\n", user.email);
+    printf("\t                           Phone: [%s]\n", user.phone);
+    printf("\t                        Username: [%s]\n", user.username);
+    printf("\t                        Password: [%s]\n", user.password);
+    printf("\n");
+    printf("\t|-------------------------------------------------------------|\n");
 
-void displayAllDoctors(){
-	FILE *doctorFile;
-    char line[200];
+    printf("Click 1 to return to Dashboard: ");
+    scanf("%d", &click);
+    while(getchar() != '\n'); // Clear input buffer
 
-    doctorFile = fopen("Doctors.txt", "r");
-    if (doctorFile == NULL) {
-        printf("Error: Could not open doctors' file.\n");
-        return;
-    }
+    if(click == 1)
+    {
+    	doctorDashBoard(username);  // Ensure this matches exactly!
+	}
 
-    printf("List of all Doctors:\n");
-
-    // Read and display doctor information
-    while (fgets(line, sizeof(line), doctorFile)) {
-        printf("%s", line);  // Display doctor details from the file
-    }
-
-    fclose(doctorFile);
+    // Pause before exiting function to avoid instant screen clear
+    printf("\nPress Enter to continue...");
+    while(getchar() != '\n'); // Wait for Enter key
 }
 
 void loadFiles(){
