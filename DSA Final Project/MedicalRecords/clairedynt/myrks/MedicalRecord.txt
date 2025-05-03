@@ -1,0 +1,16 @@
+Patient Name: Myrns Dayonot
+Date of Last Update: 03/05/2025
+Gender: Female
+Date of Birth: 1977-03-29
+Previous or Referring Doctor: Dr. Claire Dayaonot 
+
+Childhood Illnesses:
+1. Asthma
+2. Chickenpox
+List of Medical Problems:
+1. Mild Kidney Failure
+Surgeries:
+2004, Mild Kidney Failure, Chung Hua
+Allergies to Medications:
+Diagnosis: Fever
+Prescription: Paracetamol

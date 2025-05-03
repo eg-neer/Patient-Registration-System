@@ -1,3 +1,1 @@
-Claire,Dayonot,maryclaire,09610522493,clerrdynt,12345678,Carcar City,Female,2004-08-08,Cardiology
-Bianca,Gemal,biancajanegemal@gmail.com,09772935797,bianca,1234567,Carcar City,Female,2004-11-08,Dermatology
-Bianca,Gemal,biancagemal@gmail.com,09772935797,bangbang,123,Carcar City,Female,2004-11-08,Internal Medicine
+Claire,Dayaonot,claire@gmail.com,09610522493,clairedynt,08082004,Carcar City,Female,2004-08-08,Family Medicine
