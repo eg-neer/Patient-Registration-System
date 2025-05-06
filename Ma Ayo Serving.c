@@ -23,6 +23,7 @@ struct User{
 	char gender[10];
 	char dateOfBirth[11];
 	char specialization[50];
+	char assignedDoctor[50];
 };
 
 struct Appointment{
@@ -41,15 +42,17 @@ struct AcceptedAppointment{
     char time[20];
     struct AcceptedAppointment *next;	
 };
+
+//Elle naka fix nako sa warning
 struct AppointmentEntry{
 	char patientUsername[50];
 	char patientFullName[50];
 	char date[20];
 	char time[20];
-	struct AcceptedEntry *next; // it was AcceptedAppointment *next
+	struct AppointmentEntry *next; 
 };
 
-
+void color(int colorCode);
 void takeinput(char ch[50]);
 void takepassword(char pwd[50]);
 int isUsernameTaken(const char *filename, const char *username);
@@ -73,6 +76,8 @@ void viewPatientprofile(char username[50]);
 void createAppointment(char username[50]);
 void viewAppointment(char username[50]);
 int folderExists(const char *path);
+void selectDoctor(char doctorUsername[50], char doctorName[50]);
+void createMedicalRecord(const char patientUsername[50], const char doctorUsername[50]);
 
 int main(){
 	int choice = 1;
@@ -98,12 +103,12 @@ int main(){
 			switch (choice){
 			case 1:
 				system("cls");
-				printf("Patient Registration Form\n");
+				printf("\t\t\t\tPatient Registration Form\n\n");
 				registerPatient();
 				break;
 			case 2:
 				system("cls");
-				printf("Doctor Registration Form\n\n");
+				printf("\t\t\t\tDoctor Registration Form\n\n");
 				registerDoctor();
 				break;
 			case 3:
@@ -118,6 +123,10 @@ int main(){
 	} while (1);
 	
 	return 0;
+}
+void color(int colorCode) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, colorCode);
 }
 void takeinput(char ch[50]){
 	fgets(ch, 50, stdin);
@@ -175,6 +184,7 @@ void chooseSpecialization(char specialization[50]){
 	int highlight = 0;
     int key;
     int i;
+    color(11);
     const char *specializations[] = {
         "Family Medicine",
         "Internal Medicine",
@@ -184,10 +194,12 @@ void chooseSpecialization(char specialization[50]){
         "Hematology"
     };
     int numOptions = 6;
-
+	
+	color(12);
     printf("\nChoose your specialization:\n");
 
     while (1) {
+    	color(11);
         for (i = 0; i < numOptions; i++) {
             if (i == highlight)
                 printf("-> %s\n", specializations[i]);
@@ -220,9 +232,9 @@ void chooseSpecialization(char specialization[50]){
             	printf("\033[F");
         		printf("\033[2K\r");  
 			}
+			printf("\nSelected specialization: %s\n", specialization);
             break;
         }
-        printf("\nSelected specialization: %s\n", specialization);
     }
 }
 void registerDoctor() {
@@ -230,23 +242,39 @@ void registerDoctor() {
     struct User user;
     char password2[50];
     
+    color(12);
     printf("Enter your first name: ");
+    color(11);
     takeinput(user.FirstName);
-    printf("Enter your last name:");
+    color(12);
+    printf("Enter your last name: ");
+    color(11);
     takeinput(user.LastName);
+    color(12);
     printf("Enter your email: ");
+    color(11);
     takeinput(user.email);
+    color(12);
     printf("Enter your contact no: ");
+    color(11);
     takeinput(user.phone);
+    color(12);
     printf("Enter your address: ");
+    color(11);
     takeinput(user.address);
+    color(12);
     printf("Enter your gender: ");
+    color(11);
     takeinput(user.gender);
+    color(12);
     printf("Enter your birth date (YYYY-MM-DD): ");
+    color(11);
     takeinput(user.dateOfBirth);
     
     do{
+    	color(12);
     	printf("Enter your username: ");
+    	color(11);
     	takeinput(user.username);
     	if (isUsernameTaken("DoctorsFile.txt", user.username)){
     		printf("Username already taken. Input anotha one.\n");
@@ -254,9 +282,13 @@ void registerDoctor() {
 			break;
 		}
 	}while(1);
+	color(12);
 	printf("Enter your password: ");
+	color(11);
     takepassword(user.password);
+    color(12);
     printf("\nConfirm your password: ");
+    color(11);
     takepassword(password2);
 
     if (strcmp(user.password, password2) != 0) {
@@ -282,22 +314,25 @@ void registerDoctor() {
     printf("\nDoctor registration successful!\n");
     
     char doctorFolder[100];
-    sprintf(doctorFolder, "MedicalRecords\\%s", user.username);
-    mkdir("MedicalRecords");
+    sprintf(doctorFolder, "Appointments\\%s", user.username);
+    mkdir("Appointments");
     mkdir(doctorFolder);
     
-    printf("\nDoctor folder created at: %s\n", doctorFolder);
+    //printf("\nDoctor folder created at: %s\n", doctorFolder);
 }
 void displayRegisterMenu(int highlight){
 	system("cls");
-    printf("\t|------------------WELCOME TO MaAyo Serving-------------------|\n");
-    printf("\t|-------------------------------------------------------------|\n");
-
-    printf("\t|   %s [1] REGISTER AS PATIENT                              %s|\n", (highlight == 1 ? "->" : "  "), (highlight == 1 ? "<-" : "  "));
-    printf("\t|   %s [2] REGISTER AS DOCTOR                               %s|\n", (highlight == 2 ? "->" : "  "), (highlight == 2 ? "<-" : "  "));
-    printf("\t|   %s [3] Log in                                           %s|\n", (highlight == 3 ? "->" : "  "), (highlight == 3 ? "<-" : "  "));
-    printf("\t|   %s [4] Exit                                             %s|\n", (highlight == 4 ? "->" : "  "), (highlight == 4 ? "<-" : "  "));
-    printf("\t|-------------------------------------------------------------|\n");
+	color(12);
+    printf("\t\t\t\t|-------------------------------------------------------------|\n");
+	printf("\t\t\t\t|                      WELCOME TO MaAyo Serving               |\n");
+	printf("\t\t\t\t|-------------------------------------------------------------|\n");
+	color(11);
+    printf("\t\t\t\t|-------------------------------------------------------------|\n");
+    printf("\t\t\t\t|   %s [1] REGISTER AS PATIENT                                |\n", (highlight == 1 ? "->" : "  "), (highlight == 1 ? "" : "  "));
+    printf("\t\t\t\t|   %s [2] REGISTER AS DOCTOR                                 |\n", (highlight == 2 ? "->" : "  "), (highlight == 2 ? "" : "  "));
+    printf("\t\t\t\t|   %s [3] Log in                                             |\n", (highlight == 3 ? "->" : "  "), (highlight == 3 ? "" : "  "));
+    printf("\t\t\t\t|   %s [4] Exit                                               |\n", (highlight == 4 ? "->" : "  "), (highlight == 4 ? "" : "  "));
+    printf("\t\t\t\t|-------------------------------------------------------------|\n");
 }
 void logIn() {
     struct User user;
@@ -307,15 +342,23 @@ void logIn() {
     FILE *fp;
 
     system("cls");
-    printf("\t|------------------WELCOME TO MaAyo Serving-------------------|\n");
-    printf("\t|-------------------------------------------------------------|\n");
-    printf("\t                          Log In                               \n");
-    printf("\t                        Username: ");
-    takeinput(username);
-    printf("\t                        Password: ");
+    color(11);
+    printf("\t\t\t\t|-------------------------------------------------------------|\n");
+    color(12);
+	printf("\t\t\t\t|                           MaAyo Serving                     |\n");
+	color(11);
+	printf("\t\t\t\t|-------------------------------------------------------------|\n");
+    color(12);
+	printf("\t\t\t\t                          Log In                               \n");
+    printf("\t\t\t\t                        Username: ");
+    color(11);
+	takeinput(username);
+	color(12);
+    printf("\t\t\t\t                        Password: ");
+    color(11);
     takepassword(pword);
     printf("\n");
-    printf("\t|-------------------------------------------------------------|\n");
+    printf("\t\t\t\t|-------------------------------------------------------------|\n");
 
     fp = fopen("PatientFile.txt", "r");
     if (fp == NULL) {
@@ -323,8 +366,7 @@ void logIn() {
     } else {
         while (fscanf(fp, "%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^\n]\n",
                       user.FirstName, user.LastName,user.email, user.phone, user.username, user.password, user.address, user.gender, user.dateOfBirth) != EOF) {
-            printf("\n[DEBUG] Read from Doctors.txt: [%s] [%s] [%s] [%s] [%s]", 
-                   user.FirstName, user.email, user.phone, user.username, user.password);
+            printf("\nIncorrect username or password!");
             
             if (strcmp(user.username, username) == 0 && strcmp(user.password, pword) == 0) {
                 usrFound = 1;
@@ -344,8 +386,7 @@ void logIn() {
     } else if (!usrFound) {
         while (fscanf(fp, "%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^\n]\n",
                       user.FirstName, user.LastName,user.email, user.phone, user.username, user.password, user.address, user.gender, user.dateOfBirth, user.specialization) != EOF) {
-            printf("\n[DEBUG] Read from Doctors.txt: [%s] [%s] [%s] [%s] [%s]", 
-                   user.FirstName, user.email, user.phone, user.username, user.password);
+            printf("\nIncorrect username or password!");
             
             if (strcmp(user.username, username) == 0 && strcmp(user.password, pword) == 0) {
                 usrFound = 1;
@@ -377,12 +418,18 @@ void doctorDashBoard(char username[50]) {
 
     do {
         system("cls");
-        printf("\n---------------- Doctor Dashboard ----------------\n");
-        printf("%s\n", (choice == 1) ? "-> 1. View Profile" : "   1. View Profile");
-        printf("%s\n", (choice == 2) ? "-> 2. View Appointments" : "   2. View Appointments");
-        printf("%s\n", (choice == 3) ? "-> 3. Manage Appointments (Accept/Decline)" : "   3. Manage Appointments (Accept/Decline)");
-        printf("%s\n", (choice == 4) ? "-> 4. View Patient Records" : "   4. View Patient Records");
-        printf("%s\n", (choice == 5) ? "-> 5. Log Out" : "   5. Log Out");
+        color(12);
+    	printf("\t\t\t\t|-------------------------------------------------------------|\n");
+    	color(11);
+		printf("\t\t\t\t|                         Doctor Dashboard                    |\n");
+		color(12);
+		printf("\t\t\t\t|-------------------------------------------------------------|\n");
+        color(11);
+        printf("\t\t\t\t\t\t%s\n", (choice == 1) ? "-> 1. View Profile" : "   1. View Profile");
+        printf("\t\t\t\t\t\t%s\n", (choice == 2) ? "-> 2. View Appointments" : "   2. View Appointments");
+        printf("\t\t\t\t\t\t%s\n", (choice == 3) ? "-> 3. Manage Appointments (Accept/Decline)" : "   3. Manage Appointments (Accept/Decline)");
+        printf("\t\t\t\t\t\t%s\n", (choice == 4) ? "-> 4. View Patient Records" : "   4. View Patient Records");
+        printf("\t\t\t\t\t\t%s\n", (choice == 5) ? "-> 5. Log Out" : "   5. Log Out");
         
         key = getch();
         if (key == 0 || key == 224) {
@@ -452,15 +499,59 @@ void viewDoctorprofile(char username[50]){
 	}
 
 	system("cls");
-    printf("\t|--------------------------------------------Doctor Profile--------------------------------------------|\n");
-    printf("\t|------------------------------------------------------------------------------------------------------|\n");
+	color(12);
+	printf("\t\t\t\t|------------------------------------------------------------------------------------------------|\n");
+	color(11);
+	printf("\t\t\t\t|                                          Doctor Profile                                        |\n");
+	color(12);
+	printf("\t\t\t\t|------------------------------------------------------------------------------------------------|\n");
     printf("\t                                                                                               \n");
-    printf("                        First Name    : %s              Gender       : %s      Email: %s\n", user.FirstName, user.gender, user.email);
-    printf("                        Last Name     : %s              Date of Birth: %s      Address: %s\n", user.LastName, user.dateOfBirth, user.address);
-    printf("                        Specialization: %s\n", user.specialization);
-    printf("                        UserName      : %s\n", user.username);
+    // First row
+	color(12); // label color
+	printf("\t\t\t\tFirst Name    : ");
+	color(11); // output color
+	printf("%s  ", user.FirstName);
+	
+	color(12);
+	printf("\tGender       : ");
+	color(11);
+	printf("%s  ", user.gender);
+	
+	color(12);
+	printf("\tEmail: ");
+	color(11);
+	printf("%s\n", user.email);
+	
+	// Second row
+	color(12);
+	printf("\t\t\t\tLast Name     : ");
+	color(11);
+	printf("%s  ", user.LastName);
+	
+	color(12);
+	printf("\tDate of Birth: ");
+	color(11);
+	printf("%s  ", user.dateOfBirth);
+	
+	color(12);
+	printf("\tAddress: ");
+	color(11);
+	printf("%s\n", user.address);
+	
+	// Third row
+	color(12);
+	printf("\t\t\t\tSpecialization: ");
+	color(11);
+	printf("%s\n", user.specialization);
+	
+	// Fourth row
+	color(12);
+	printf("\t\t\t\tUserName      : ");
+	color(11);
+	printf("%s\n", user.username);
+
     printf("\n");
-    printf("\t|-----------------------------------------------------------------------------------------------------|\n");
+    printf("\t\t\t\t|------------------------------------------------------------------------------------------------|\n");
 
     printf("Click 1 to return to Dashboard: ");
     scanf("%d", &click);
@@ -474,35 +565,57 @@ void viewDoctorprofile(char username[50]){
 void registerPatient(){
 	FILE *fp;
     struct User user;
-    char password2[50];
+    char username[50], password2[50];
+    char doctorUsername[50], doctorName[50];
     
+    color(12);
     printf("Enter your first name: ");
+    color(11);
     takeinput(user.FirstName);
-    printf("Enter your last name:");
+    color(12);
+    printf("Enter your last name: ");
+    color(11);
     takeinput(user.LastName);
+    color(12);
     printf("Enter your email: ");
+    color(11);
     takeinput(user.email);
+    color(12);
     printf("Enter your contact no: ");
+    color(11);
     takeinput(user.phone);
+    color(12);
     printf("Enter your address: ");
+    color(11);
     takeinput(user.address);
+    color(12);
     printf("Enter your gender: ");
+    color(11);
     takeinput(user.gender);
+    color(12);
     printf("Enter your birth date (YYYY-MM-DD): ");
+    color(11);
     takeinput(user.dateOfBirth);
     
     do{
+    	color(12);
     	printf("Enter your username: ");
+    	color(11);
     	takeinput(user.username);
     	if (isUsernameTaken("PatientFile.txt", user.username)){
-    		printf("Username already taken. Input anotha one.\n");
+    		printf("Username already taken. Input another one.\n");
 		} else{
 			break;
 		}
 	}while(1);
+	
+	color(12);
 	printf("Enter your password: ");
+	color(11);
     takepassword(user.password);
+    color(12);
     printf("\nConfirm your password: ");
+    color(11);
     takepassword(password2);
 
     if (strcmp(user.password, password2) != 0) {
@@ -510,19 +623,213 @@ void registerPatient(){
         return;
     }
     
+    printf("\nSelect Doctor:\n");
+    selectDoctor(doctorUsername, doctorName);
+    strcpy(user.assignedDoctor, doctorUsername);
+
     fp = fopen("PatientFile.txt", "a");
     if (fp == NULL) {
         printf("\nError opening file!\n");
         return;
     }
 
-    fprintf(fp, "%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+    fprintf(fp, "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
             user.FirstName, user.LastName, user.email,
             user.phone, user.username, user.password,
-            user.address, user.gender, user.dateOfBirth);
+            user.address, user.gender, user.dateOfBirth,
+		  user.assignedDoctor);
 
     fclose(fp);
+    
+    //system("cls");
+    
+    createMedicalRecord(user.username, doctorUsername);
+    
+    mkdir("Appointments");
+    char doctorFolder[100], patientFolder[100];
+    sprintf(doctorFolder, "Appointments\\%s", doctorUsername);
+    mkdir(doctorFolder);
+    sprintf(patientFolder, "%s\\%s", doctorFolder, user.username);
+    mkdir(patientFolder);
+    
     printf("\nPatient registration successful!\n");
+}
+void selectDoctor(char doctorUsername[50], char doctorName[50]) {
+    FILE *fp = fopen("DoctorsFile.txt", "r");
+    if (fp == NULL) {
+        printf("\nError: No doctors available!\n");
+        strcpy(doctorUsername, "");
+        strcpy(doctorName, "");
+        return;
+    }
+    
+    struct User doctor;
+    int doctorCount = 0;
+    char doctorNames[100][100];
+    char doctorUsernames[100][50];
+    
+    printf("\nAvailable Doctors:\n");
+    printf("-----------------\n");
+    
+    while (fscanf(fp, "%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^\n]\n",
+                  doctor.FirstName, doctor.LastName, doctor.email, doctor.phone, 
+                  doctor.username, doctor.password, doctor.address, doctor.gender, 
+                  doctor.dateOfBirth, doctor.specialization) != EOF) {
+        doctorCount++;
+        printf("%d. Dr. %s %s (%s)\n", doctorCount, doctor.FirstName, doctor.LastName, doctor.specialization);
+        sprintf(doctorNames[doctorCount-1], "Dr. %s %s", doctor.FirstName, doctor.LastName);
+        strcpy(doctorUsernames[doctorCount-1], doctor.username);
+    }
+    fclose(fp);
+    
+    if (doctorCount == 0) {
+        printf("\nNo doctors available!\n");
+        strcpy(doctorUsername, "");
+        strcpy(doctorName, "");
+        return;
+    }
+    
+    int choice;
+    do {
+        printf("\nSelect your doctor (1-%d): ", doctorCount);
+        scanf("%d", &choice);
+        while(getchar() != '\n'); // Clear input buffer
+        
+        if (choice < 1 || choice > doctorCount) {
+            printf("Invalid choice! Please try again.\n");
+        }
+    } while (choice < 1 || choice > doctorCount);
+    
+    strcpy(doctorName, doctorNames[choice-1]);
+    strcpy(doctorUsername, doctorUsernames[choice-1]);
+}
+void createMedicalRecord(const char patientUsername[50], const char doctorUsername[50]) {
+    char firstName[50], lastName[50], email[100], phone[20], username[50], password[50], address[100], gender[20], dob[20], assignedDoctor[50];
+    int found = 0;
+    
+    FILE *fpPatient = fopen("PatientFile.txt", "r");
+    if (!fpPatient) {
+        printf("\nError opening PatientFile.txt!\n");
+        return;
+    }
+    
+    char line[512];
+    while (fgets(line, sizeof(line), fpPatient)) {
+        sscanf(line, "%49[^,],%49[^,],%99[^,],%19[^,],%49[^,],%49[^,],%99[^,],%19[^,],%19[^,],%49[^\n]",
+               firstName, lastName, email, phone, username, password, address, gender, dob, assignedDoctor);
+        if (strcmp(username, patientUsername) == 0) {
+            found = 1;
+            break;
+        }
+    }
+    fclose(fpPatient);
+    
+    if (!found) {
+        printf("\nPatient details not found!\n");
+        return;
+    }
+    
+    char docFirstName[50], docLastName[50], docEmail[100], docPhone[20], docUsername[50], docPassword[50], docAddress[100], docGender[20], docDob[20], docSpecialization[100];
+    int doctorFound = 0;
+    
+    FILE *fpDoctor = fopen("DoctorsFile.txt", "r");
+    if (!fpDoctor) {
+        printf("\nError opening DoctorFile.txt!\n");
+        return;
+    }
+    
+    char docLine[512];
+    while (fgets(docLine, sizeof(docLine), fpDoctor)) {
+        sscanf(docLine, "%49[^,],%49[^,],%99[^,],%19[^,],%49[^,],%49[^,],%99[^,],%19[^,],%19[^,],%49[^\n]",
+               docFirstName, docLastName, docEmail, docPhone, docUsername, docPassword, docAddress, docGender, docDob, docSpecialization);
+        if (strcmp(docUsername, doctorUsername) == 0) {
+            doctorFound = 1;
+            break;
+        }
+    }
+    fclose(fpDoctor);
+    
+    if (!doctorFound) {
+        printf("\nDoctor details not found!\n");
+        return;
+    }
+    
+    char today[20];
+    getTodayDate(today);
+    
+    char recordPath[200];
+    sprintf(recordPath, "MedicalRecords\\%s.txt", patientUsername);
+    FILE *fpRecord = fopen(recordPath, "w");
+    if (!fpRecord) {
+        printf("\nError opening MedicalRecord.txt for writing!\n");
+        return;
+    }
+    
+    fprintf(fpRecord, "Patient Name: %s %s\n", firstName, lastName);
+    fprintf(fpRecord, "Date of Last Update: %s\n", today);
+    fprintf(fpRecord, "Gender: %s\n", gender);
+    fprintf(fpRecord, "Date of Birth: %s\n", dob);
+    fprintf(fpRecord, "Primary Doctor: Dr. %s %s (%s)\n\n", docFirstName, docLastName, docSpecialization);
+
+    char input[256];
+    
+    fprintf(fpRecord, "Childhood Illnesses:\n");
+    printf("\nMedical History Form\n");
+    printf("--------------------\n");
+    printf("Enter Childhood Illnesses (type 'done' to finish):\n");
+    int count = 1;
+    while (1) {
+        printf("%d. ", count);
+        fgets(input, sizeof(input), stdin);
+        input[strcspn(input, "\n")] = 0;
+        if (strcmp(input, "done") == 0) break;
+        fprintf(fpRecord, "%d. %s\n", count++, input);
+    }
+    
+    fprintf(fpRecord, "\nList of Medical Problems:\n");
+    printf("\nEnter List of Medical Problems (type 'done' to finish):\n");
+    count = 1;
+    while (1) {
+        printf("%d. ", count);
+        fgets(input, sizeof(input), stdin);
+        input[strcspn(input, "\n")] = 0;
+        if (strcmp(input, "done") == 0) break;
+        fprintf(fpRecord, "%d. %s\n", count++, input);
+    }
+    
+    fprintf(fpRecord, "\nSurgeries:\n");
+    printf("\nEnter Surgeries (format: Year, Reason, Hospital; type 'done' to finish):\n");
+    while (1) {
+        printf("Year, Reason, Hospital: ");
+        fgets(input, sizeof(input), stdin);
+        input[strcspn(input, "\n")] = 0;
+        if (strcmp(input, "done") == 0) break;
+        fprintf(fpRecord, "%s\n", input);
+    }
+    
+    fprintf(fpRecord, "\nAllergies to Medications:\n");
+    printf("\nEnter Allergies to Medications (format: Drug, Reaction; type 'done' to finish):\n");
+    while (1) {
+        printf("Drug, Reaction: ");
+        fgets(input, sizeof(input), stdin);
+        input[strcspn(input, "\n")] = 0;
+        if (strcmp(input, "done") == 0) break;
+        fprintf(fpRecord, "%s\n", input);
+    }
+    
+    fprintf(fpRecord, "\nCurrent Medications:\n");
+    printf("\nEnter Current Medications (type 'done' to finish):\n");
+    count = 1;
+    while (1) {
+        printf("%d. ", count);
+        fgets(input, sizeof(input), stdin);
+        input[strcspn(input, "\n")] = 0;
+        if (strcmp(input, "done") == 0) break;
+        fprintf(fpRecord, "%d. %s\n", count++, input);
+    }
+    
+    fclose(fpRecord);
+    printf("\nMedical record created successfully!\n");
 }
 void patientDashboard(char username[50]) {
     trimNewline(username);
@@ -531,11 +838,17 @@ void patientDashboard(char username[50]) {
 
     do {
         system("cls");
-        printf("\n---------------- Patient Dashboard ----------------\n");
-        printf("%s\n", (choice == 1) ? "-> 1. View Profile" : "   1. View Profile");
-        printf("%s\n", (choice == 2) ? "-> 2. Schedule an Appointment" : "   2. Schedule an Appointment");
-        printf("%s\n", (choice == 3) ? "-> 3. View Appointments" : "   3. View Appointments");
-        printf("%s\n", (choice == 4) ? "-> 4. Log Out" : "   4. Log Out");
+        color(12);
+    	printf("\t\t\t\t|-------------------------------------------------------------|\n");
+    	color(11);
+		printf("\t\t\t\t|                         Patient Dashboard                   |\n");
+		color(12);
+		printf("\t\t\t\t|-------------------------------------------------------------|\n");
+        color(11);
+        printf("\t\t\t\t\t\t%s\n", (choice == 1) ? "-> 1. View Profile" : "   1. View Profile");
+        printf("\t\t\t\t\t\t%s\n", (choice == 2) ? "-> 2. Schedule an Appointment" : "   2. Schedule an Appointment");
+        printf("\t\t\t\t\t\t%s\n", (choice == 3) ? "-> 3. View Appointments" : "   3. View Appointments");
+        printf("\t\t\t\t\t\t%s\n", (choice == 4) ? "-> 4. Log Out" : "   4. Log Out");
         
         key = getch();
         if (key == 0 || key == 224) {
@@ -604,14 +917,51 @@ void viewPatientprofile(char username[50]){
 	}
 
 	system("cls");
-    printf("\t|--------------------------------------------Patient Profile--------------------------------------------|\n");
-    printf("\t|------------------------------------------------------------------------------------------------------|\n");
-    printf("\t                                                                                               \n");
-    printf("                        First Name    : %s              Gender       : %s      Email: %s\n", user.FirstName, user.gender, user.email);
-    printf("                        Last Name     : %s              Date of Birth: %s      Address: %s\n", user.LastName, user.dateOfBirth, user.address);
-    printf("                        UserName      : %s\n", user.username);
-    printf("\n");
-    printf("\t|-----------------------------------------------------------------------------------------------------|\n");
+   color(12);
+	printf("\t\t\t\t|------------------------------------------------------------------------------------------------|\n");
+	color(11);
+	printf("\t\t\t\t|                                          Patient Profile                                       |\n");
+	color(12);
+	printf("\t\t\t\t|------------------------------------------------------------------------------------------------|\n");
+	    printf("\t                                                                                               \n");
+    color(12);
+	printf("\t\t\t\tFirst Name    : ");
+	color(11);
+	printf("%s  ", user.FirstName);
+	
+	color(12);
+	printf("\tGender       : ");
+	color(11);
+	printf("%s  ", user.gender);
+	
+	color(12);
+	printf("\tEmail: ");
+	color(11);
+	printf("%s\n", user.email);
+	
+	// Second row
+	color(12);
+	printf("\t\t\t\tLast Name     : ");
+	color(11);
+	printf("%s  ", user.LastName);
+	
+	color(12);
+	printf("\tDate of Birth: ");
+	color(11);
+	printf("%s  ", user.dateOfBirth);
+	
+	color(12);
+	printf("\tAddress: ");
+	color(11);
+	printf("%s\n", user.address);
+	
+	// Third row
+	color(12);
+	printf("\t\t\t\tUserName      : ");
+	color(11);
+	printf("%s\n", user.username);
+	    printf("\n");
+    printf("\t\t\t\t|------------------------------------------------------------------------------------------------|\n");
 
     printf("Click 1 to return to Dashboard: ");
     scanf("%d", &click);
@@ -630,108 +980,99 @@ void createAppointment(char username[50]){
         return;
     }
 
-    FILE *fp = fopen("DoctorsFile.txt", "r");
-    if (fp == NULL) {
-        printf("\nError: Unable to open DoctorsFile.txt!\n");
-        return;
-    }
-
-    printf("\nAvailable Doctors:\n");
-    printf("------------------------------------------\n");
-
-    struct User doctor;
-    int doctorCount = 0;
-    char doctorNames[100][50];
-	char doctorUsernames[100][50];  
-
-    while (fscanf(fp, "%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^\n]\n",
-                  doctor.FirstName,doctor.LastName, doctor.email, doctor.phone, doctor.username, doctor.password) != EOF) {
-        doctorCount++;
-        strcpy(doctorNames[doctorCount - 1], doctor.FirstName);
-        strcpy(doctorUsernames[doctorCount - 1], doctor.username);
-        printf("%d. Dr. %s %s\n", doctorCount, doctor.FirstName, doctor.LastName);
-    }
-    fclose(fp);
-
-    if (doctorCount == 0) {
-        printf("\nNo registered doctors found. Please try again later.\n");
-        return;
-    }
-
-    printf("------------------------------------------\n");
-
     struct Appointment* newAppointment = (struct Appointment*)malloc(sizeof(struct Appointment));
     if (newAppointment == NULL) {
         printf("\nMemory allocation failed!\n");
         return;
     }
+    
+      FILE *fp = fopen("PatientFile.txt", "r");
+    if (!fp) {
+        printf("\nError opening PatientFile.txt\n");
+        free(newAppointment);
+        return;
+    }
 
-    int choice;
-    do {
-        printf("\nSelect a doctor (1-%d): ", doctorCount);
-        scanf("%d", &choice);
-        while(getchar() != '\n'); 
-
-        if (choice < 1 || choice > doctorCount) {
-            printf("\nInvalid choice! Please enter a valid number.\n");
+    struct User temp;
+    int found = 0;
+    while (fscanf(fp, "%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^\n]\n",
+                  temp.FirstName, temp.LastName, temp.email, temp.phone, temp.username, temp.password,
+                  temp.address, temp.gender, temp.dateOfBirth, temp.assignedDoctor) != EOF) {
+        if (strcmp(temp.username, username) == 0) {
+            found = 1;
+            break;
         }
-    } while (choice < 1 || choice > doctorCount);
+    }
+    fclose(fp);
+    
+     if (!found) {
+        printf("\nPatient not found.\n");
+        free(newAppointment);
+        return;
+    }
+    
+     strcpy(newAppointment->doctorUsername, temp.assignedDoctor);
+     
+      fp = fopen("DoctorsFile.txt", "r");
+    if (!fp) {
+        printf("\nError opening DoctorsFile.txt\n");
+        free(newAppointment);
+        return;
+    }
 
-    strcpy(newAppointment->doctorName, doctorNames[choice - 1]);
-    strcpy(newAppointment->doctorUsername, doctorUsernames[choice - 1]);
+    struct User doctor;
+    found = 0;
+    while (fscanf(fp, "%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^\n]\n",
+                  doctor.FirstName, doctor.LastName, doctor.email, doctor.phone, doctor.username, doctor.password,
+                  doctor.address, doctor.gender, doctor.dateOfBirth, doctor.specialization) != EOF) {
+        if (strcmp(doctor.username, newAppointment->doctorUsername) == 0) {
+            sprintf(newAppointment->doctorName, "%s %s", doctor.FirstName, doctor.LastName);
+            found = 1;
+            break;
+        }
+    }
+    fclose(fp);
 
-    printf("Enter Appointment Date (DD/MM/YYYY): ");
+    if (!found) {
+        printf("\nAssigned doctor not found in DoctorsFile.txt\n");
+        free(newAppointment);
+        return;
+    }
+
+
+    printf("Enter Appointment Date (MM-DD-YYYY): ");
     takeinput(newAppointment->date);
-    printf("Enter Appointment Time (HH:MM AM/PM): ");
+    printf("Enter Appointment Time (HHMM AM/PM): ");
     takeinput(newAppointment->time);
     
     newAppointment->next = NULL;
     patientAppointment = newAppointment;
 	
 	//Folder
-    mkdir("MedicalRecords");
+    mkdir("Appointments");
     char doctorFolder[100], patientFolder[150];
-    sprintf(doctorFolder, "MedicalRecords\\%s", newAppointment->doctorUsername);
+    sprintf(doctorFolder, "Appointments\\%s", newAppointment->doctorUsername);
     mkdir(doctorFolder);
 
     sprintf(patientFolder, "%s\\%s", doctorFolder, username);
     mkdir(patientFolder);
     
     //Doctor.txt
-    char pathDoctorTxt[200];
-    sprintf(pathDoctorTxt, "%s\\Doctor.txt", patientFolder);
-    FILE *fpDoctor = fopen(pathDoctorTxt, "w");
-    if (fpDoctor != NULL) {
-        fprintf(fpDoctor, "Assigned Doctor: Dr. %s\nUsername: %s\n", newAppointment->doctorName, newAppointment->doctorUsername);
-        fclose(fpDoctor);
+    char pathApptTxt[200];
+    sprintf(pathApptTxt, "%s\\%s_%s.txt", patientFolder, newAppointment->date, newAppointment->time);
+    FILE *fpAppt = fopen(pathApptTxt, "w");
+    if (fpAppt != NULL) {
+    	   fprintf(fpAppt, "Pending\n");
+        fprintf(fpAppt, "Username: %s\nAssigned Doctor: Dr. %s\n\n", username, newAppointment->doctorName);
+        fprintf(fpAppt, "Appointment Date: %s\nAppointment Time: %s\n\n", newAppointment->date, newAppointment->time);
+        fprintf(fpAppt, "Feedback:\n");
+        fclose(fpAppt);
+    }else {
+        printf("\nError creating appointment file!\n");
+        free(newAppointment);
+        return;
     }
     
-	//Schedule.txt
-	char pathScheduleTxt[200];
-    sprintf(pathScheduleTxt, "%s\\Schedule.txt", patientFolder);
-    FILE *fpSchedule = fopen(pathScheduleTxt, "w");
-    if (fpSchedule != NULL) {
-        fprintf(fpSchedule, "Appointment Date: %s\nAppointment Time: %s\n", newAppointment->date, newAppointment->time);
-        fclose(fpSchedule);
-    }
-    
-    //Feedback.txt
-    char pathFeedbackTxt[200];
-    sprintf(pathFeedbackTxt, "%s\\Feedback.txt", patientFolder);
-    FILE *fpFeedback = fopen(pathFeedbackTxt, "w");
-    if (fpFeedback != NULL) {
-        fprintf(fpFeedback, "Feedback:\n");
-        fclose(fpFeedback);
-    }
-    
-    //Status.txt
-    char pathStatusTxt[200];
-    sprintf(pathStatusTxt, "%s\\Status.txt", patientFolder);
-    FILE *fpStatus = fopen(pathStatusTxt, "w");
-    if (fpStatus != NULL){
-    	fprintf(fpStatus, "Pending\n");
-    	fclose(fpStatus);
-	}
     printf("\nAppointment successfully scheduled with Dr. %s on %s at %s.\n",
            newAppointment->doctorName, newAppointment->date, newAppointment->time);
     
@@ -841,11 +1182,11 @@ void viewAppointment(char username[50]) {
 void manageAppointments(char doctorUsername[50]) {
     int click;
     char doctorFolder[100];
-    sprintf(doctorFolder, "MedicalRecords\\%s", doctorUsername);
+    sprintf(doctorFolder, "Appointments\\%s", doctorUsername);
 
     DIR *dir = opendir(doctorFolder);
     if (dir == NULL) {
-        printf("\nNo patient appointments found for you.\n");
+        printf("\nDoctor folder not found: %s\n", doctorFolder);
         return;
     }
 
@@ -855,7 +1196,6 @@ void manageAppointments(char doctorUsername[50]) {
     
     struct AcceptedAppointment *acceptedHead = NULL;
 
-    // Collect all patient folders
     while ((entry = readdir(dir)) != NULL) {
         if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             char fullPath[200];
@@ -1015,7 +1355,7 @@ void getPatientFullName(const char username[50], char fullName[100]) {
 void viewAppointments(char doctorUsername[50]) {
     char doctorFolder[100];
     int i;
-    sprintf(doctorFolder, "MedicalRecords\\%s", doctorUsername);
+    sprintf(doctorFolder, "Appointments\\%s", doctorUsername);
 
     DIR *dir = opendir(doctorFolder);
     if (dir == NULL) {
@@ -1371,6 +1711,3 @@ void viewPatientRecords(char doctorUsername[50]) {
         free(temp);
     }
 }
-
-
-

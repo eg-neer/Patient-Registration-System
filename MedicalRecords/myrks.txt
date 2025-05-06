@@ -1,0 +1,19 @@
+Patient Name: Myrns Dayonot
+Date of Last Update: 06/05/2025
+Gender: Female
+Date of Birth: 0977-03-29
+Primary Doctor: Dr. Claire Dayaonot (Family Medicine)
+
+Childhood Illnesses:
+1. Asthma
+2. Chickenpox
+
+List of Medical Problems:
+1. Mild Kidney Failure
+
+Surgeries:
+2004, Mild Kidney Failure, Chong Hua
+
+Allergies to Medications:
+
+Current Medications:

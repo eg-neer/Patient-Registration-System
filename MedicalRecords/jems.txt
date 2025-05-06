@@ -1,0 +1,17 @@
+Patient Name: Jems Trazona
+Date of Last Update: 06/05/2025
+Gender: Male
+Date of Birth: 2005-10-05
+Primary Doctor: Dr. Claire Dayaonot (Family Medicine)
+
+Childhood Illnesses:
+1. Asthma
+2. Measles
+
+List of Medical Problems:
+
+Surgeries:
+
+Allergies to Medications:
+
+Current Medications:

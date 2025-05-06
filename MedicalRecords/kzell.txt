@@ -1,0 +1,18 @@
+Patient Name: Keisha Bernante
+Date of Last Update: 06/05/2025
+Gender: F
+Date of Birth: 2008-05-27
+Primary Doctor: Dr. Elle Bernante (Pediatrics)
+
+Childhood Illnesses:
+1. Pneumonia
+
+List of Medical Problems:
+1. Asthma
+
+Surgeries:
+2013, Pneumonia, Chong Hua 
+
+Allergies to Medications:
+
+Current Medications:

@@ -1,0 +1,16 @@
+Patient Name: Remus Dayonot
+Date of Last Update: 06/05/2025
+Gender: Male
+Date of Birth: 1975-05-13
+Primary Doctor: Dr. Claire Dayaonot (Family Medicine)
+
+Childhood Illnesses:
+1. Eczema
+
+List of Medical Problems:
+
+Surgeries:
+
+Allergies to Medications:
+
+Current Medications:
