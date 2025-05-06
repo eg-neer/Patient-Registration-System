@@ -170,6 +170,7 @@ int isUsernameTaken(const char *filename, const char *username) {
             token = strtok(NULL, ",");
         }
     }
+    
     fclose(fp);
     return 0;
 }
