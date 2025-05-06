@@ -1,0 +1,20 @@
+Patient Name: Shan  Wabinga
+Date of Last Update: 07/05/2025
+Gender: Female
+Date of Birth: 2004-07-17
+Primary Doctor: Dr. Elle Bernante (Pediatrics)
+
+Childhood Illnesses:
+1. Asthma
+
+List of Medical Problems:
+1. Kidney Failure
+
+Surgeries:
+2013, Kidney Failure, Chung Hua
+
+Allergies to Medications:
+Painkiller, Difficulty Breathing
+
+Current Medications:
+1. Paracetamol

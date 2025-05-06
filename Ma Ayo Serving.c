@@ -52,6 +52,14 @@ struct AppointmentEntry{
 	struct AppointmentEntry *next; 
 };
 
+struct AppointmentNode {
+    char patientUsername[50];
+    char doctorName[100];
+    char date[20];
+    char time[20];
+    struct AppointmentNode *next;
+};
+
 void color(int colorCode);
 void takeinput(char ch[50]);
 void takepassword(char pwd[50]);
@@ -65,11 +73,12 @@ void logIn();
 void doctorDashBoard(char username[50]);
 void viewDoctorprofile(char username[50]);
 void manageAppointments(char doctorUsername[50]);
-int compareAppointments(const void *a, const void *b);
+int compareDates(struct AppointmentNode *a, struct AppointmentNode *b);
 void getPatientFullName(const char username[50], char fullName[100]);
 void viewAppointments(char doctorUsername[50]);
+void insertSorted(struct AppointmentNode **head, struct AppointmentNode *newNode);
 void getTodayDate(char *buffer);
-void viewPatientRecords(char doctorUsername[50]);
+void viewPatientRecords(const char doctorUsername[50]);
 void displayPatientMedicalRecord(const char doctorUsername[50], const char patientUsername[50]);
 void patientDashboard(char username[50]);
 void viewPatientprofile(char username[50]);
@@ -1096,87 +1105,110 @@ int folderExists(const char *path) {
 }
 void viewAppointment(char username[50]) {
     int click;
-    char line [200];
+    int found = 0;
 
-    FILE *fp = fopen("DoctorsFile.txt", "r");
-    if (fp == NULL) {
-        printf("\nError: Unable to open DoctorsFile.txt!\n");
+    // Step 1: Find patient's assigned doctor
+    FILE *fp = fopen("PatientFile.txt", "r");
+    if (!fp) {
+        printf("\nError opening PatientFile.txt\n");
         return;
     }
 
-    struct User doctor;
-    int found = 0;
+    struct User temp;
+    char assignedDoctor[50];
+    int patientFound = 0;
 
-    while (fscanf(fp, "%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^\n]\n",
-                  doctor.FirstName, doctor.LastName, doctor.email, doctor.phone, doctor.username, doctor.password) != EOF) {
-        
-        char patientFolder[200];
-        sprintf(patientFolder, "MedicalRecords\\%s\\%s", doctor.username, username);
-
-        if (folderExists(patientFolder)) {
-            char doctorPath[300], schedulePath[300], statusPath[300];
-            char doctorName[100], date[20], time[20], status[20];
-
-            // Read Doctor.txt
-            sprintf(doctorPath, "%s\\Doctor.txt", patientFolder);
-            FILE *fpDoctor = fopen(doctorPath, "r");
-            if (fpDoctor != NULL) {
-                while (fgets(line, sizeof(line), fpDoctor)) {
-			        if (sscanf(line, "Assigned Doctor: %[^\n]", doctorName) == 1) {
-			            break;
-			        }
-			    }
-			    fclose(fpDoctor);
-            } else {
-                strcpy(doctorName, "Unknown");
-            }
-
-            // Read Schedule.txt
-            sprintf(schedulePath, "%s\\Schedule.txt", patientFolder);
-            FILE *fpSchedule = fopen(schedulePath, "r");
-            if (fpSchedule != NULL) {
-                while (fgets(line, sizeof(line), fpSchedule)) {
-			        if (sscanf(line, "Appointment Date: %[^\n]", date) == 1) {
-			            continue;
-			        }
-			        if (sscanf(line, "Appointment Time: %[^\n]", time) == 1) {
-			            continue;
-			        }
-			    }
-			    fclose(fpSchedule);
-            } else {
-                strcpy(date, "Unknown");
-                strcpy(time, "Unknown");
-            }
-
-            // Read Status.txt
-            sprintf(statusPath, "%s\\Status.txt", patientFolder);
-            FILE *fpStatus = fopen(statusPath, "r");
-            if (fpStatus != NULL) {
-                if (fgets(status, sizeof(status), fpStatus)) {
-			        strtok(status, "\n");
-			    }
-			    fclose(fpStatus);
-            } else {
-                strcpy(status, "Trial");
-            }
-
-            printf("\n---------------- Your Appointment ----------------\n");
-            printf("Doctor: %s\nDate: %s\nTime: %s\nStatus: %s\n", doctorName, date, time, status);
-            printf("--------------------------------------------------\n");
-            found = 1;
-            break;  // stop after finding first match
+    while (fscanf(fp, "%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^,],%49[^\n]\n",
+                  temp.FirstName, temp.LastName, temp.email, temp.phone, temp.username, temp.password,
+                  temp.address, temp.gender, temp.dateOfBirth, temp.assignedDoctor) != EOF) {
+        if (strcmp(temp.username, username) == 0) {
+            strcpy(assignedDoctor, temp.assignedDoctor);
+            patientFound = 1;
+            break;
         }
     }
     fclose(fp);
 
-    if (!found) {
-        printf("\nNo appointment scheduled.\n");
+    if (!patientFound) {
+        printf("\nPatient not found.\n");
+        printf("Click 1 to return to Dashboard: ");
+        scanf("%d", &click);
+        if (click == 1) {
+            patientDashboard(username);
+        }
+        return;
     }
+
+    // Step 2: Build folder path
+    char patientFolder[200];
+    sprintf(patientFolder, "Appointments\\%s\\%s", assignedDoctor, username);
+
+    if (!folderExists(patientFolder)) {
+        printf("\nNo appointment folder found for your assigned doctor.\n");
+        printf("Click 1 to return to Dashboard: ");
+        scanf("%d", &click);
+        if (click == 1) {
+            patientDashboard(username);
+        }
+        return;
+    }
+
+    // Step 3: Find an appointment file
+    DIR *dir;
+    struct dirent *entry;
+    char appointmentFile[300] = "";
+    if ((dir = opendir(patientFolder)) != NULL) {
+        while ((entry = readdir(dir)) != NULL) {
+            if (strstr(entry->d_name, ".txt")) {
+                sprintf(appointmentFile, "%s\\%s", patientFolder, entry->d_name);
+                found = 1;
+                break;  // take first found; you can upgrade to sort/select latest if needed
+            }
+        }
+        closedir(dir);
+    }
+
+    if (!found) {
+        printf("\nNo appointment scheduled with your assigned doctor.\n");
+        printf("Click 1 to return to Dashboard: ");
+        scanf("%d", &click);
+        if (click == 1) {
+            patientDashboard(username);
+        }
+        return;
+    }
+
+    // Step 4: Read appointment file
+    char line[200], status[50] = "Unknown", doctorName[100] = "Unknown";
+    char date[30] = "Unknown", time[30] = "Unknown";
+
+    FILE *fpAppt = fopen(appointmentFile, "r");
+    if (fpAppt != NULL) {
+        if (fgets(status, sizeof(status), fpAppt)) {
+            strtok(status, "\n");  // trim newline
+        }
+        while (fgets(line, sizeof(line), fpAppt)) {
+            if (sscanf(line, "Assigned Doctor: Dr. %[^\n]", doctorName) == 1) {
+                continue;
+            }
+            if (sscanf(line, "Appointment Date: %[^\n]", date) == 1) {
+                continue;
+            }
+            if (sscanf(line, "Appointment Time: %[^\n]", time) == 1) {
+                continue;
+            }
+        }
+        fclose(fpAppt);
+    }
+
+    // Step 5: Display appointment
+    printf("\n---------------- Your Appointment ----------------\n");
+    printf("Doctor: Dr. %s\nDate: %s\nTime: %s\nStatus: %s\n", doctorName, date, time, status);
+    printf("--------------------------------------------------\n");
 
     printf("Click 1 to return to Dashboard: ");
     scanf("%d", &click);
-    if(click == 1) {
+    if (click == 1) {
         patientDashboard(username);
     }
 }
@@ -1224,10 +1256,12 @@ void manageAppointments(char doctorUsername[50]) {
         system("cls");
         printf("\n--------- Manage Appointments ---------\n");
         for (i = 0; i < patientCount; i++) {
+        	char fullName[100];
+    		getPatientFullName(patients[i], fullName);
             if (i == selected) {
-                printf("-> %s\n", patients[i]);
+                printf("-> %s\n", fullName);
             } else {
-                printf("   %s\n", patients[i]);
+                printf("   %s\n", fullName);
             }
         }
         printf("\nUse Up/Down to select, Enter to manage, 0 to exit.\n");
@@ -1240,10 +1274,25 @@ void manageAppointments(char doctorUsername[50]) {
             if (selected < patientCount - 1) selected++;
         } else if (choice == 13) { // Enter
             // Manage selected appointment
-            char statusPath[200];
-            sprintf(statusPath, "%s\\%s\\Status.txt", doctorFolder, patients[selected]);
+            char patientFolder[200];
+            sprintf(patientFolder, "%s\\%s\\", doctorFolder, patients[selected]);
 
-            printf("\nManaging appointment for: %s\n", patients[selected]);
+            WIN32_FIND_DATA findFileData;
+            HANDLE hFind;
+            char searchPattern[300];
+            sprintf(searchPattern, "%s\\*.txt", patientFolder);
+            hFind = FindFirstFile(searchPattern, &findFileData);
+
+            if (hFind == INVALID_HANDLE_VALUE) {
+                printf("\nNo appointment file found for patient: %s\n", patients[selected]);
+                continue;
+            }
+
+            char appointmentPath[300];
+            sprintf(appointmentPath, "%s\\%s", patientFolder, findFileData.cFileName);
+            FindClose(hFind);
+            
+			printf("\nManaging appointment for: %s\n", patients[selected]);
             printf("Set status:\n");
             printf("1. Accept\n");
             printf("2. Decline\n");
@@ -1252,50 +1301,46 @@ void manageAppointments(char doctorUsername[50]) {
             int statusChoice;
             scanf("%d", &statusChoice);
             while(getchar() != '\n');  // clear input buffer
-
-            FILE *fpStatus = fopen(statusPath, "w");
-            if (fpStatus != NULL) {
-                if (statusChoice == 1) {
-                    fprintf(fpStatus, "Accepted\n");
-                    printf("\nAppointment marked as ACCEPTED.\n");
-
-                    // Read date and time from Schedule.txt
-                    char schedulePath[200];
-                    sprintf(schedulePath, "%s\\%s\\Schedule.txt", doctorFolder, patients[selected]);
-                    FILE *fpSchedule = fopen(schedulePath, "r");
-                    if (fpSchedule != NULL) {
-                        char dateLine[100], timeLine[100];
-                        char date[20], time[10];
-                        if (fgets(dateLine, sizeof(dateLine), fpSchedule) &&
-                            fgets(timeLine, sizeof(timeLine), fpSchedule)) {
-                            sscanf(dateLine, "Appointment Date: %[^\n]", date);
-                            sscanf(timeLine, "Appointment Time: %[^\n]", time);
-
-                            // Create new accepted appointment node
-                            struct AcceptedAppointment *newNode = (struct AcceptedAppointment *)malloc(sizeof(struct AcceptedAppointment));
-                            if (newNode != NULL) {
-                                strcpy(newNode->patientUsername, patients[selected]);
-                                strcpy(newNode->doctorUsername, doctorUsername);
-                                strcpy(newNode->date, date);
-                                strcpy(newNode->time, time);
-                                newNode->next = acceptedHead;
-                                acceptedHead = newNode;
-                            }
-                        }
-                        fclose(fpSchedule);
-                    } else {
-                        printf("Warning: Could not open Schedule.txt to read date/time.\n");
-                    }
-                } else if (statusChoice == 2) {
-                    fprintf(fpStatus, "Declined\n");
-                    printf("\nAppointment marked as DECLINED.\n");
-                } else {
-                    printf("\nInvalid choice. No changes made.\n");
-                }
-                fclose(fpStatus);
-            } else {
-                printf("\nError: Could not open status file!\n");
+            
+            FILE *fp = fopen(appointmentPath, "r");
+            if (fp == NULL) {
+                printf("\nError opening appointment file!\n");
+                continue;
             }
+            
+            char fileContent[5000];
+            if (fgets(fileContent, sizeof(fileContent), fp) == NULL) {
+                printf("\nError reading appointment file!\n");
+                fclose(fp);
+                continue;
+            }
+
+            char restContent[5000] = "";
+            char line[500];
+            while (fgets(line, sizeof(line), fp)) {
+                strcat(restContent, line);
+            }
+            fclose(fp);
+			
+			fp = fopen(appointmentPath, "w");
+            if (fp == NULL) {
+                printf("\nError writing to appointment file!\n");
+                continue;
+            }
+            
+            if (statusChoice == 1) {
+                fprintf(fp, "Accepted\n");
+                printf("\nAppointment marked as ACCEPTED.\n");
+            } else if (statusChoice == 2) {
+                fprintf(fp, "Declined\n");
+                printf("\nAppointment marked as DECLINED.\n");
+            } else {
+                fprintf(fp, "%s", fileContent);  // keep original status
+                printf("\nInvalid choice. No changes made.\n");
+            }
+
+            fprintf(fp, "%s", restContent);
+            fclose(fp);
 
             printf("\nPress any key to continue...\n");
             getch();
@@ -1310,15 +1355,12 @@ void manageAppointments(char doctorUsername[50]) {
         doctorDashBoard(doctorUsername);
     }
 }
-int compareAppointments(const void *a, const void *b) {
-    struct AppointmentEntry *appA = (struct AppointmentEntry *)a;
-    struct AppointmentEntry *appB = (struct AppointmentEntry *)b;
-
-    char dayA[3], monthA[3], yearA[5];
+int compareDates(struct AppointmentNode *a, struct AppointmentNode *b) {
+	char dayA[3], monthA[3], yearA[5];
     char dayB[3], monthB[3], yearB[5];
 
-    sscanf(appA->date, "%2[^/]/%2[^/]/%4s", dayA, monthA, yearA);
-    sscanf(appB->date, "%2[^/]/%2[^/]/%4s", dayB, monthB, yearB);
+    sscanf(a->date, "%2[^/]/%2[^/]/%4s", dayA, monthA, yearA);
+    sscanf(b->date, "%2[^/]/%2[^/]/%4s", dayB, monthB, yearB);
 
     int cmpYear = strcmp(yearA, yearB);
     if (cmpYear != 0) return cmpYear;
@@ -1329,7 +1371,7 @@ int compareAppointments(const void *a, const void *b) {
     int cmpDay = strcmp(dayA, dayB);
     if (cmpDay != 0) return cmpDay;
 
-    return strcmp(appA->time, appB->time);
+    return strcmp(a->time, b->time);
 }
 void getPatientFullName(const char username[50], char fullName[100]) {
     FILE *fp = fopen("PatientFile.txt", "r");
@@ -1353,9 +1395,21 @@ void getPatientFullName(const char username[50], char fullName[100]) {
     fclose(fp);
     strcpy(fullName, "Unknown");
 }
+void insertSorted(struct AppointmentNode **head, struct AppointmentNode *newNode) {
+    if (*head == NULL || compareDates(newNode, *head) < 0) {
+        newNode->next = *head;
+        *head = newNode;
+    } else {
+        struct AppointmentNode *current = *head;
+        while (current->next != NULL && compareDates(newNode, current->next) >= 0) {
+            current = current->next;
+        }
+        newNode->next = current->next;
+        current->next = newNode;
+    }
+}
 void viewAppointments(char doctorUsername[50]) {
     char doctorFolder[100];
-    int i;
     sprintf(doctorFolder, "Appointments\\%s", doctorUsername);
 
     DIR *dir = opendir(doctorFolder);
@@ -1364,45 +1418,64 @@ void viewAppointments(char doctorUsername[50]) {
         return;
     }
 
-    struct dirent *entry;
-    struct AppointmentEntry appointments[100];
+    struct dirent *entryPatient;
+    struct AppointmentNode *head = NULL;
     int count = 0;
 
-    while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+    while ((entryPatient = readdir(dir)) != NULL) {
+        if (strcmp(entryPatient->d_name, ".") == 0 || strcmp(entryPatient->d_name, "..") == 0) continue;
 
         char patientFolder[150];
-        sprintf(patientFolder, "%s\\%s", doctorFolder, entry->d_name);
+        sprintf(patientFolder, "%s\\%s", doctorFolder, entryPatient->d_name);
 
-        char statusPath[200];
-        sprintf(statusPath, "%s\\Status.txt", patientFolder);
-        FILE *fpStatus = fopen(statusPath, "r");
-        if (fpStatus == NULL) continue;
+        DIR *apptDir = opendir(patientFolder);
+        if (apptDir == NULL) continue;
 
-        char status[20];
-        fgets(status, sizeof(status), fpStatus);
-        strtok(status, "\n");
-        fclose(fpStatus);
+        struct dirent *entryFile;
+        while ((entryFile = readdir(apptDir)) != NULL) {
+            if (strcmp(entryFile->d_name, ".") == 0 || strcmp(entryFile->d_name, "..") == 0) continue;
 
-        if (strcmp(status, "Accepted") != 0) continue;
+            char apptFilePath[300];
+            sprintf(apptFilePath, "%s\\%s", patientFolder, entryFile->d_name);
 
-        char schedulePath[200];
-        sprintf(schedulePath, "%s\\Schedule.txt", patientFolder);
-        FILE *fpSchedule = fopen(schedulePath, "r");
-        if (fpSchedule == NULL) continue;
+            FILE *fpAppt = fopen(apptFilePath, "r");
+            if (fpAppt == NULL) continue;
 
-        char dateLine[50], timeLine[50], date[20], time[20];
-        fgets(dateLine, sizeof(dateLine), fpSchedule);
-        sscanf(dateLine, "Appointment Date: %19[^\n]", date);
-        fgets(timeLine, sizeof(timeLine), fpSchedule);
-        sscanf(timeLine, "Appointment Time: %19[^\n]", time);
-        fclose(fpSchedule);
+            char status[20];
+            if (fgets(status, sizeof(status), fpAppt) == NULL) {
+                fclose(fpAppt);
+                continue;
+            }
+            strtok(status, "\n");
 
-        strcpy(appointments[count].patientUsername, entry->d_name);
-        getPatientFullName(entry->d_name, appointments[count].patientFullName);
-        strcpy(appointments[count].date, date);
-        strcpy(appointments[count].time, time);
-        count++;
+            if (strcmp(status, "Accepted") != 0) {
+                fclose(fpAppt);
+                continue;
+            }
+
+            char line[200], date[50] = "", time[50] = "";
+            while (fgets(line, sizeof(line), fpAppt)) {
+                if (sscanf(line, "Appointment Date: %[^\n]", date) == 1) continue;
+                if (sscanf(line, "Appointment Time: %[^\n]", time) == 1) continue;
+            }
+            fclose(fpAppt);
+
+            struct AppointmentNode *newNode = (struct AppointmentNode *)malloc(sizeof(struct AppointmentNode));
+            if (newNode == NULL) {
+                printf("Memory allocation failed!\n");
+                continue;
+            }
+
+            strcpy(newNode->patientUsername, entryPatient->d_name);
+            getPatientFullName(entryPatient->d_name, newNode->patientUsername);
+            strcpy(newNode->date, date);
+            strcpy(newNode->time, time);
+            newNode->next = NULL;
+
+            insertSorted(&head, newNode);
+            count++;
+        }
+        closedir(apptDir);
     }
     closedir(dir);
 
@@ -1411,13 +1484,16 @@ void viewAppointments(char doctorUsername[50]) {
         return;
     }
 
-    qsort(appointments, count, sizeof(struct AppointmentEntry), compareAppointments);
-
     printf("\n--------- Accepted Appointments (Sorted) ---------\n");
-    for (i = 0; i < count; i++) {
+    struct AppointmentNode *current = head;
+    int i = 1;
+    while (current != NULL) {
         printf("%d. Patient: %s \n   Date: %s\n   Time: %s\n",
-               i + 1, appointments[i].patientFullName,
-               appointments[i].date, appointments[i].time);
+               i++, current->patientUsername,
+               current->date, current->time);
+        struct AppointmentNode *temp = current;
+        current = current->next;
+        free(temp); // Free each node after displaying
     }
     printf("--------------------------------------------------\n");
 }
@@ -1500,215 +1576,92 @@ void displayPatientMedicalRecord(const char doctorUsername[50], const char patie
     fclose(fp);
     printf("===========================================\n");
 }
-void viewPatientRecords(char doctorUsername[50]) {
-    char today[20];
-    getTodayDate(today);
-    int i;
+void viewPatientRecords(const char doctorUsername[50]) {
+    char firstName[50], lastName[50], email[100], phone[20], username[50], password[50], address[100], gender[20], dob[20], assignedDoctor[50];
+    char patientUsernames[100][50];  // Max 100 patients
+    int patientCount = 0;
 
-    char doctorFolder[100];
-    sprintf(doctorFolder, "MedicalRecords\\%s", doctorUsername);
-
-    DIR *dir = opendir(doctorFolder);
-    if (!dir) {
-        printf("\nNo appointments found.\n");
+    FILE *fpPatient = fopen("PatientFile.txt", "r");
+    if (!fpPatient) {
+        printf("\nError opening PatientFile.txt!\n");
         return;
     }
 
-    struct dirent *entry;
-    struct AppointmentEntry *head = NULL, *tail = NULL;
-
-    while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
-            continue;
-
-        char schedulePath[200];
-        sprintf(schedulePath, "%s\\%s\\Schedule.txt", doctorFolder, entry->d_name);
-
-        FILE *fp = fopen(schedulePath, "r");
-        if (!fp) continue;
-
-        char dateLine[100], timeLine[100], date[20], time[20];
-        fgets(dateLine, sizeof(dateLine), fp);
-        fgets(timeLine, sizeof(timeLine), fp);
-        fclose(fp);
-
-        sscanf(dateLine, "Appointment Date: %[^\n]", date);
-        sscanf(timeLine, "Appointment Time: %[^\n]", time);
-
-        if (strcmp(date, today) == 0) {
-            struct AppointmentEntry *newNode = (struct AppointmentEntry*)malloc(sizeof(struct AppointmentEntry));
-            strcpy(newNode->patientUsername, entry->d_name);
-            strcpy(newNode->date, date);
-            strcpy(newNode->time, time);
-            newNode->next = NULL;
-
-            if (!head) head = tail = newNode;
-            else { tail->next = newNode; tail = newNode; }
+    // Load patients assigned to this doctor
+    char line[512];
+    while (fgets(line, sizeof(line), fpPatient)) {
+        sscanf(line, "%49[^,],%49[^,],%99[^,],%19[^,],%49[^,],%49[^,],%99[^,],%19[^,],%19[^,],%49[^\n]",
+               firstName, lastName, email, phone, username, password, address, gender, dob, assignedDoctor);
+        if (strcmp(assignedDoctor, doctorUsername) == 0) {
+            strcpy(patientUsernames[patientCount], username);
+            patientCount++;
         }
     }
-    closedir(dir);
+    fclose(fpPatient);
 
-    if (!head) {
-        printf("\nNo patients scheduled for today (%s).\n", today);
+    if (patientCount == 0) {
+        printf("\nNo patients assigned to you.\n");
         return;
     }
 
-    int index = 1;
-    struct AppointmentEntry *curr = head;
-    printf("\nPatients Scheduled for Today (%s):\n", today);
-    while (curr) {
-        char fullName[100];
-        getPatientFullName(curr->patientUsername, fullName);
-        printf("%d. %s\n", index++, fullName);
-        curr = curr->next;
+    int selected = 0;
+    int ch;
+
+    while (1) {
+    	int i;
+        system("cls");  // Clear console
+        printf("\nSelect a Patient (Use Up/Down arrows, Enter to view):\n\n");
+
+        for (i = 0; i < patientCount; i++) {
+            char fullName[100];
+    		getPatientFullName(patientUsernames[i], fullName);
+            if (i == selected) {
+                printf("-> %s\n", fullName);
+            } else {
+                printf("   %s\n", fullName);
+            }
+        }
+
+        ch = getch();
+        if (ch == 224) {  // Arrow key
+            ch = getch();
+            if (ch == 72) {  // Up arrow
+                selected = (selected - 1 + patientCount) % patientCount;
+            } else if (ch == 80) {  // Down arrow
+                selected = (selected + 1) % patientCount;
+            }
+        } else if (ch == 13) {  // Enter
+            break;
+        }
     }
 
-    int choice;
-    printf("\nSelect patient number to update record: ");
-    scanf("%d", &choice);
-    while(getchar() != '\n');
+    // Display the selected patient's record
+    char recordPath[200];
+    sprintf(recordPath, "MedicalRecords\\%s.txt", patientUsernames[selected]);
 
-    curr = head;
-    for (i = 1; i < choice && curr; i++) curr = curr->next;
-    if (!curr) {
-        printf("Invalid choice.\n");
+    FILE *fpRecord = fopen(recordPath, "r");
+    if (!fpRecord) {
+        printf("\nNo medical record found for patient: %s\n", patientUsernames[selected]);
         return;
     }
-	
-	printf("\n1. View Medical Record\n2. Update Medical Record\nChoose option: ");
-    int action;
-    scanf("%d", &action);
-    while(getchar() != '\n');
-    
-    if (action == 1) {
-        displayPatientMedicalRecord(doctorUsername, curr->patientUsername);
-    }
-    else if (action == 2){
-    	char firstName[50], lastName[50], email[100], phone[20], username[50], password[50], address[100], gender[20], dob[20];
-		int found = 0;
-		
-		char docFirstName[50], docLastName[50], docEmail[100], docPhone[20], docUsername[50], docPassword[50], docSpecialization[100];
-		int doctorFound = 0;
-        FILE *fpPatient = fopen("PatientFile.txt", "r");
-		if (!fpPatient) {
-		    printf("\nError opening PatientFile.txt!\n");
-		    return;
-		}
-		
-		FILE *fpDoctor = fopen("DoctorsFile.txt", "r");
-		if (!fpDoctor) {
-		    printf("\nError opening DoctorFile.txt!\n");
-		    return;
-		}
-		
-		char line[512];
-		while (fgets(line, sizeof(line), fpPatient)) {
-		    sscanf(line, "%49[^,],%49[^,],%99[^,],%19[^,],%49[^,],%49[^,],%99[^,],%19[^,],%19[^\n]",
-		           firstName, lastName, email, phone, username, password, address, gender, dob);
-		    if (strcmp(username, curr->patientUsername) == 0) {
-		        found = 1;
-		        break;
-		    }
-		}
-		char docLine[512];
-		while (fgets(docLine, sizeof(docLine), fpDoctor)) {
-		    sscanf(docLine, "%49[^,],%49[^,],%99[^,],%19[^,],%49[^,],%49[^,],%99[^\n]",
-		           docFirstName, docLastName, docEmail, docPhone, docUsername, docPassword, docSpecialization);
-		    if (strcmp(docUsername, doctorUsername) == 0) {
-		        doctorFound = 1;
-		        break;
-		    }
-		}
-		fclose(fpPatient);
-		fclose(fpDoctor);
-		
-		if (!found) {
-		    printf("\nPatient details not found!\n");
-		    return;
-		}
-		
-		if (!doctorFound) {
-		    printf("\nDoctor details not found!\n");
-		    return;
-		}
 
-		char recordPath[200];
-		sprintf(recordPath, "MedicalRecords\\%s\\%s\\MedicalRecord.txt", doctorUsername, curr->patientUsername);
-		FILE *fpRecord = fopen(recordPath, "w");
-		if (!fpRecord) {
-		    printf("\nError opening MedicalRecord.txt for writing!\n");
-		    return;
-		}
-		
-		fprintf(fpRecord, "Patient Name: %s %s\n", firstName, lastName);
-		fprintf(fpRecord, "Date of Last Update: %s\n", today);
-		fprintf(fpRecord, "Gender: %s\n", gender);
-		fprintf(fpRecord, "Date of Birth: %s\n", dob);
-		fprintf(fpRecord, "Previous or Referring Doctor: Dr. %s %s \n\n", docFirstName, docLastName);
+    system("cls");
+    color(11);
+    printf("\n===========================================\n");
+    color(12);
+    printf("      MEDICAL RECORD: %s\n", patientUsernames[selected]);
+    color(11);
+    printf("===========================================\n");
 	
-	    char input[256];
-		
-		fprintf(fpRecord, "Childhood Illnesses:\n");
-	    printf("\nEnter Childhood Illnesses (type 'done' to finish):\n");
-	    int count = 1;
-	    while (1) {
-	        printf("%d. ", count);
-	        fgets(input, sizeof(input), stdin);
-	        input[strcspn(input, "\n")] = 0;
-	        if (strcmp(input, "done") == 0) break;
-	        fprintf(fpRecord, "%d. %s\n", count++, input);
-	    }
-	
-	    fprintf(fpRecord, "List of Medical Problems:\n");
-		printf("\nEnter List of Medical Problems (type 'done' to finish):\n");
-	    count = 1;
-	    while (1) {
-	        printf("%d. ", count);
-	        fgets(input, sizeof(input), stdin);
-	        input[strcspn(input, "\n")] = 0;
-	        if (strcmp(input, "done") == 0) break;
-	        fprintf(fpRecord, "%d. %s\n", count++, input);
-	    }
-		
-		fprintf(fpRecord, "Surgeries:\n");
-	    printf("\nEnter Surgeries (format: Year, Reason, Hospital; type 'done' to finish):\n");
-	    while (1) {
-	        printf("Year, Reason, Hospital: ");
-	        fgets(input, sizeof(input), stdin);
-	        input[strcspn(input, "\n")] = 0;
-	        if (strcmp(input, "done") == 0) break;
-	        fprintf(fpRecord, "%s\n", input);
-	    }
-		
-		fprintf(fpRecord, "Allergies to Medications:\n");
-	    printf("\nEnter Allergies to Medications (format: Drug, Reaction; type 'done' to finish):\n");
-	    while (1) {
-	        printf("Drug, Reaction: ");
-	        fgets(input, sizeof(input), stdin);
-	        input[strcspn(input, "\n")] = 0;
-	        if (strcmp(input, "done") == 0) break;
-	        fprintf(fpRecord, "%s\n", input);
-	    }
-	
-	    printf("\nEnter Final Diagnosis: ");
-	    fgets(input, sizeof(input), stdin);
-	    input[strcspn(input, "\n")] = 0;
-	    fprintf(fpRecord, "Diagnosis: %s\n", input);
-	
-	    printf("\nEnter Prescription: ");
-	    fgets(input, sizeof(input), stdin);
-	    input[strcspn(input, "\n")] = 0;
-	    fprintf(fpRecord, "Prescription: %s\n", input);
-	
-	    fclose(fpRecord);
-	    printf("\nMedical record updated successfully!\n");
-	}
-	else{
-		printf("Invalid action.\n");
-	}
-    while (head) {
-        struct AppointmentEntry *temp = head;
-        head = head->next;
-        free(temp);
+	color(12);
+    char recordLine[256];
+    while (fgets(recordLine, sizeof(recordLine), fpRecord)) {
+        printf("%s", recordLine);
     }
+
+    fclose(fpRecord);
+    color(11);
+    printf("\n===========================================\n");
+    printf("Press any key to return...\n");
+    getch();
 }
