@@ -43,7 +43,6 @@ struct AcceptedAppointment{
     struct AcceptedAppointment *next;	
 };
 
-//Elle naka fix nako sa warning
 struct AppointmentEntry{
 	char patientUsername[50];
 	char patientFullName[50];
@@ -79,14 +78,18 @@ void viewAppointments(char doctorUsername[50]);
 void insertSorted(struct AppointmentNode **head, struct AppointmentNode *newNode);
 void getTodayDate(char *buffer);
 void viewPatientRecords(const char doctorUsername[50]);
+void addFeedback(const char doctorUsername[50]);
 void displayPatientMedicalRecord(const char doctorUsername[50], const char patientUsername[50]);
 void patientDashboard(char username[50]);
 void viewPatientprofile(char username[50]);
 void createAppointment(char username[50]);
+void checkExistingAppointments(char *patientFolder);
 void viewAppointment(char username[50]);
+void viewDoctorFeedback(const char patientUsername[50]);
 int folderExists(const char *path);
 void selectDoctor(char doctorUsername[50], char doctorName[50]);
 void createMedicalRecord(const char patientUsername[50], const char doctorUsername[50]);
+
 
 int main(){
 	int choice = 1;
@@ -327,8 +330,6 @@ void registerDoctor() {
     sprintf(doctorFolder, "Appointments\\%s", user.username);
     mkdir("Appointments");
     mkdir(doctorFolder);
-    
-    //printf("\nDoctor folder created at: %s\n", doctorFolder);
 }
 void displayRegisterMenu(int highlight){
 	system("cls");
@@ -437,19 +438,20 @@ void doctorDashBoard(char username[50]) {
         color(11);
         printf("\t\t\t\t\t\t%s\n", (choice == 1) ? "-> 1. View Profile" : "   1. View Profile");
         printf("\t\t\t\t\t\t%s\n", (choice == 2) ? "-> 2. View Appointments" : "   2. View Appointments");
-        printf("\t\t\t\t\t\t%s\n", (choice == 3) ? "-> 3. Manage Appointments (Accept/Decline)" : "   3. Manage Appointments (Accept/Decline)");
+        printf("\t\t\t\t\t\t%s\n", (choice == 3) ? "-> 3. Manage Appointments" : "   3. Manage Appointments");
         printf("\t\t\t\t\t\t%s\n", (choice == 4) ? "-> 4. View Patient Records" : "   4. View Patient Records");
-        printf("\t\t\t\t\t\t%s\n", (choice == 5) ? "-> 5. Log Out" : "   5. Log Out");
+        printf("\t\t\t\t\t\t%s\n", (choice == 5) ? "-> 5. Add Feedback" : "   5. Add Feedback");
+        printf("\t\t\t\t\t\t%s\n", (choice == 6) ? "-> 6. Log Out" : "   6. Log Out");
         
         key = getch();
         if (key == 0 || key == 224) {
             key = getch();
             switch (key) {
                 case 72: // UP arrow
-                    choice = (choice == 1) ? 5 : choice - 1;
+                    choice = (choice == 1) ? 6 : choice - 1;
                     break;
                 case 80: // DOWN arrow
-                    choice = (choice == 5) ? 1 : choice + 1;
+                    choice = (choice == 6) ? 1 : choice + 1;
                     break;
             }
         } else if (key == 13) { // ENTER key
@@ -467,7 +469,10 @@ void doctorDashBoard(char username[50]) {
                 case 4:
                     viewPatientRecords(username);
                     break;
-                case 5:
+                case 5: 
+                	addFeedback(username);
+                	break;
+                case 6:
                     printf("\nLogging out...\n");
                     main();
                     return;
@@ -858,7 +863,8 @@ void patientDashboard(char username[50]) {
         printf("\t\t\t\t\t\t%s\n", (choice == 1) ? "-> 1. View Profile" : "   1. View Profile");
         printf("\t\t\t\t\t\t%s\n", (choice == 2) ? "-> 2. Schedule an Appointment" : "   2. Schedule an Appointment");
         printf("\t\t\t\t\t\t%s\n", (choice == 3) ? "-> 3. View Appointments" : "   3. View Appointments");
-        printf("\t\t\t\t\t\t%s\n", (choice == 4) ? "-> 4. Log Out" : "   4. Log Out");
+        printf("\t\t\t\t\t\t%s\n", (choice == 4) ? "-> 4. View Doctor Feedback" : "   4. View Doctor Feedback");
+        printf("\t\t\t\t\t\t%s\n", (choice == 5) ? "-> 5. Log Out" : "   5. Log Out");
         
         key = getch();
         if (key == 0 || key == 224) {
@@ -884,6 +890,9 @@ void patientDashboard(char username[50]) {
                     viewAppointment(username);
                     break;
                 case 4:
+                	viewDoctorFeedback(username);
+                    break;
+                case 5:
                     printf("\nLogging out...\n");
                     main();
                     return;
@@ -982,24 +991,56 @@ void viewPatientprofile(char username[50]){
     	patientDashboard(username);  // Ensure this matches exactly!
 	}
 }
+void checkExistingAppointments(char *patientFolder) {
+    WIN32_FIND_DATA findFileData;
+    HANDLE hFind = INVALID_HANDLE_VALUE;
+    char searchPath[260];
+
+    // Build search pattern: patientFolder\* (all files in patient folder)
+    sprintf(searchPath, "%s\\*", patientFolder);
+
+    hFind = FindFirstFile(searchPath, &findFileData);
+
+    if (hFind == INVALID_HANDLE_VALUE) {
+        // No files found or folder does not exist (no existing appointments)
+        return;
+    } 
+    
+    do {
+        if (!(findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+            // Found a regular file
+            char filePath[260];
+            sprintf(filePath, "%s\\%s", patientFolder, findFileData.cFileName);
+            FILE *existingFile = fopen(filePath, "r");
+            if (existingFile) {
+                char status[50];
+                if (fgets(status, sizeof(status), existingFile) != NULL) {
+                    status[strcspn(status, "\n")] = 0;  // Remove newline
+                    if (strcmp(status, "Pending") == 0 || strcmp(status, "Accepted") == 0) {
+                        printf("\nYou already have an appointment (%s) that is still %s.\n", findFileData.cFileName, status);
+                        fclose(existingFile);
+                        FindClose(hFind);
+                        exit(0);  // or return; depending on your flow
+                    }
+                }
+                fclose(existingFile);
+            }
+        }
+    } while (FindNextFile(hFind, &findFileData) != 0);
+
+    FindClose(hFind);
+}
 void createAppointment(char username[50]){
 	int click;
-    if (patientAppointment != NULL) {
-        printf("\nYou already have an appointment scheduled with Dr. %s on %s at %s.\n", 
-               patientAppointment->doctorName, patientAppointment->date, patientAppointment->time);
-        return;
-    }
 
-    struct Appointment* newAppointment = (struct Appointment*)malloc(sizeof(struct Appointment));
-    if (newAppointment == NULL) {
-        printf("\nMemory allocation failed!\n");
-        return;
-    }
+    // Setup folders first (so we can check them)
+    mkdir("Appointments");
+    char doctorFolder[100], patientFolder[150];
     
-      FILE *fp = fopen("PatientFile.txt", "r");
+    // Load patient info to get assigned doctor
+    FILE *fp = fopen("PatientFile.txt", "r");
     if (!fp) {
         printf("\nError opening PatientFile.txt\n");
-        free(newAppointment);
         return;
     }
 
@@ -1015,15 +1056,29 @@ void createAppointment(char username[50]){
     }
     fclose(fp);
     
-     if (!found) {
+    if (!found) {
         printf("\nPatient not found.\n");
-        free(newAppointment);
         return;
     }
-    
-     strcpy(newAppointment->doctorUsername, temp.assignedDoctor);
-     
-      fp = fopen("DoctorsFile.txt", "r");
+
+    sprintf(doctorFolder, "Appointments\\%s", temp.assignedDoctor);
+    mkdir(doctorFolder);
+    sprintf(patientFolder, "%s\\%s", doctorFolder, username);
+    mkdir(patientFolder);
+
+    // ?? CHECK EXISTING APPOINTMENTS HERE BEFORE ANYTHING ELSE
+    checkExistingAppointments(patientFolder);
+
+    // Only now, proceed to allocate and create new appointment
+    struct Appointment* newAppointment = (struct Appointment*)malloc(sizeof(struct Appointment));
+    if (newAppointment == NULL) {
+        printf("\nMemory allocation failed!\n");
+        return;
+    }
+
+    strcpy(newAppointment->doctorUsername, temp.assignedDoctor);
+
+    fp = fopen("DoctorsFile.txt", "r");
     if (!fp) {
         printf("\nError opening DoctorsFile.txt\n");
         free(newAppointment);
@@ -1049,7 +1104,6 @@ void createAppointment(char username[50]){
         return;
     }
 
-
     printf("Enter Appointment Date (MM-DD-YYYY): ");
     takeinput(newAppointment->date);
     printf("Enter Appointment Time (HHMM AM/PM): ");
@@ -1057,27 +1111,18 @@ void createAppointment(char username[50]){
     
     newAppointment->next = NULL;
     patientAppointment = newAppointment;
-	
-	//Folder
-    mkdir("Appointments");
-    char doctorFolder[100], patientFolder[150];
-    sprintf(doctorFolder, "Appointments\\%s", newAppointment->doctorUsername);
-    mkdir(doctorFolder);
 
-    sprintf(patientFolder, "%s\\%s", doctorFolder, username);
-    mkdir(patientFolder);
-    
-    //Doctor.txt
+    // Write appointment file
     char pathApptTxt[200];
     sprintf(pathApptTxt, "%s\\%s_%s.txt", patientFolder, newAppointment->date, newAppointment->time);
     FILE *fpAppt = fopen(pathApptTxt, "w");
     if (fpAppt != NULL) {
-    	   fprintf(fpAppt, "Pending\n");
+        fprintf(fpAppt, "Pending\n");
         fprintf(fpAppt, "Username: %s\nAssigned Doctor: Dr. %s\n\n", username, newAppointment->doctorName);
         fprintf(fpAppt, "Appointment Date: %s\nAppointment Time: %s\n\n", newAppointment->date, newAppointment->time);
         fprintf(fpAppt, "Feedback:\n");
         fclose(fpAppt);
-    }else {
+    } else {
         printf("\nError creating appointment file!\n");
         free(newAppointment);
         return;
@@ -1086,12 +1131,11 @@ void createAppointment(char username[50]){
     printf("\nAppointment successfully scheduled with Dr. %s on %s at %s.\n",
            newAppointment->doctorName, newAppointment->date, newAppointment->time);
     
-	printf("Click 1 to return to Dashboard: ");
+    printf("Click 1 to return to Dashboard: ");
     scanf("%d", &click);
-    if(click == 1)
-    {
-    	patientDashboard(username);
-	}
+    if (click == 1) {
+        patientDashboard(username);
+    }
 }
 int folderExists(const char *path) {
     struct stat info;
@@ -1212,6 +1256,31 @@ void viewAppointment(char username[50]) {
         patientDashboard(username);
     }
 }
+void viewDoctorFeedback(const char patientUsername[50]){
+	char feedbackPath[200];
+    sprintf(feedbackPath, "MedicalRecords\\%s_feedback.txt", patientUsername);
+
+    FILE *fpFeedback = fopen(feedbackPath, "r");
+    if (!fpFeedback) {
+        printf("\nNo feedback available yet or error opening feedback file!\n");
+        printf("Press any key to return...\n");
+        getch();
+        return;
+    }
+
+    printf("\n----- Feedback -----\n\n");
+
+    char line[512];
+    while (fgets(line, sizeof(line), fpFeedback)) {
+        printf("%s", line);
+    }
+
+    fclose(fpFeedback);
+
+    printf("\n----- End of Feedback -----\n");
+    printf("Press any key to return...\n");
+    getch();
+}
 void manageAppointments(char doctorUsername[50]) {
     int click;
     char doctorFolder[100];
@@ -1255,6 +1324,7 @@ void manageAppointments(char doctorUsername[50]) {
     do {
         system("cls");
         printf("\n--------- Manage Appointments ---------\n");
+        printf("Enter 0 to exit.\n\n");
         for (i = 0; i < patientCount; i++) {
         	char fullName[100];
     		getPatientFullName(patients[i], fullName);
@@ -1264,7 +1334,7 @@ void manageAppointments(char doctorUsername[50]) {
                 printf("   %s\n", fullName);
             }
         }
-        printf("\nUse Up/Down to select, Enter to manage, 0 to exit.\n");
+        
 
         choice = getch();  // capture arrow keys or Enter
 
@@ -1292,10 +1362,13 @@ void manageAppointments(char doctorUsername[50]) {
             sprintf(appointmentPath, "%s\\%s", patientFolder, findFileData.cFileName);
             FindClose(hFind);
             
-			printf("\nManaging appointment for: %s\n", patients[selected]);
-            printf("Set status:\n");
+			//printf("\nManaging appointment for: %s\n", patients[selected]);
+			color(12);
+            printf("\nSet status:\n");
+            color(11);
             printf("1. Accept\n");
             printf("2. Decline\n");
+            printf("3. Done Appointment\n");
             printf("Choice: ");
 
             int statusChoice;
@@ -1334,7 +1407,14 @@ void manageAppointments(char doctorUsername[50]) {
             } else if (statusChoice == 2) {
                 fprintf(fp, "Declined\n");
                 printf("\nAppointment marked as DECLINED.\n");
-            } else {
+            } else if(statusChoice == 3){
+            	fclose(fp);
+            	if (remove(appointmentPath) == 0) {
+                    printf("\nAppointment marked as DONE and schedule file deleted.\n");
+                } else {
+                    printf("\nFailed to delete appointment file!\n");
+                }
+			}else {
                 fprintf(fp, "%s", fileContent);  // keep original status
                 printf("\nInvalid choice. No changes made.\n");
             }
@@ -1484,7 +1564,7 @@ void viewAppointments(char doctorUsername[50]) {
         return;
     }
 
-    printf("\n--------- Accepted Appointments (Sorted) ---------\n");
+    printf("\n--------- Accepted Appointments ---------\n");
     struct AppointmentNode *current = head;
     int i = 1;
     while (current != NULL) {
@@ -1610,8 +1690,9 @@ void viewPatientRecords(const char doctorUsername[50]) {
     while (1) {
     	int i;
         system("cls");  // Clear console
-        printf("\nSelect a Patient (Use Up/Down arrows, Enter to view):\n\n");
-
+        color(12);
+        printf("\nSelect a Patient:\n\n");
+		color(11);
         for (i = 0; i < patientCount; i++) {
             char fullName[100];
     		getPatientFullName(patientUsernames[i], fullName);
@@ -1649,7 +1730,7 @@ void viewPatientRecords(const char doctorUsername[50]) {
     color(11);
     printf("\n===========================================\n");
     color(12);
-    printf("      MEDICAL RECORD: %s\n", patientUsernames[selected]);
+    printf("      MEDICAL RECORD: \n");
     color(11);
     printf("===========================================\n");
 	
@@ -1665,3 +1746,129 @@ void viewPatientRecords(const char doctorUsername[50]) {
     printf("Press any key to return...\n");
     getch();
 }
+void addFeedback(const char doctorUsername[50]) {
+	int i;
+    char firstName[50], lastName[50], email[100], phone[20], username[50], password[50], address[100], gender[20], dob[20], assignedDoctor[50];
+    char patientUsernames[100][50];  // Max 100 patients
+    int patientCount = 0;
+
+    FILE *fpPatient = fopen("PatientFile.txt", "r");
+    if (!fpPatient) {
+        printf("\nError opening PatientFile.txt!\n");
+        return;
+    }
+
+    // Load patients assigned to this doctor
+    char line[512];
+    while (fgets(line, sizeof(line), fpPatient)) {
+        sscanf(line, "%49[^,],%49[^,],%99[^,],%19[^,],%49[^,],%49[^,],%99[^,],%19[^,],%19[^,],%49[^\n]",
+               firstName, lastName, email, phone, username, password, address, gender, dob, assignedDoctor);
+        if (strcmp(assignedDoctor, doctorUsername) == 0) {
+            strcpy(patientUsernames[patientCount], username);
+            patientCount++;
+        }
+    }
+    fclose(fpPatient);
+    
+    if (patientCount == 0) {
+        printf("\nNo patients assigned to you.\n");
+        return;
+    }
+    
+    char docFirstName[50], docLastName[50], docEmail[100], docPhone[20], docPassword[50], docAddress[100], docGender[20], docDob[20], docSpecialization[100];
+    int doctorFound = 0;
+    FILE *fpDoctor = fopen("DoctorsFile.txt", "r");
+    if (!fpDoctor) {
+        printf("\nError opening DoctorsFile.txt!\n");
+        return;
+    }
+
+    char docLine[512];
+    while (fgets(docLine, sizeof(docLine), fpDoctor)) {
+        sscanf(docLine, "%49[^,],%49[^,],%99[^,],%19[^,],%49[^,],%49[^,],%99[^,],%19[^,],%19[^,],%99[^\n]",
+               docFirstName, docLastName, docEmail, docPhone, username, docPassword, docAddress, docGender, docDob, docSpecialization);
+        if (strcmp(username, doctorUsername) == 0) {
+            doctorFound = 1;
+            break;
+        }
+    }
+    fclose(fpDoctor);
+    
+    if (!doctorFound) {
+        printf("\nDoctor details not found!\n");
+        return;
+    }
+
+    int selected = 0;
+    int ch;
+
+    while (1) {
+        system("cls");  // Clear console
+        color(12);
+        printf("\nSelect a Patient to Add Feedback:\n\n");
+		color(11);
+        for (i = 0; i < patientCount; i++) {
+            char fullName[100];
+    		getPatientFullName(patientUsernames[i], fullName);
+            if (i == selected) {
+                printf("-> %s\n", fullName);
+            } else {
+                printf("   %s\n", fullName);
+            }
+        }
+
+        ch = getch();
+        if (ch == 224) {  // Arrow key
+            ch = getch();
+            if (ch == 72) {  // Up arrow
+                selected = (selected - 1 + patientCount) % patientCount;
+            } else if (ch == 80) {  // Down arrow
+                selected = (selected + 1) % patientCount;
+            }
+        } else if (ch == 13) {  // Enter
+            break;
+        }
+    }
+
+    char feedback[500];
+    color(12);
+    printf("\nEnter feedback for patient %s (type 'END' on a new line to finish):\n", patientUsernames[selected]);
+	color(11);
+    char feedbackPath[200];
+    sprintf(feedbackPath, "MedicalRecords\\%s_feedback.txt", patientUsernames[selected]);
+
+    struct stat buffer; //this will check if a file exists
+    int fileExists = (stat(feedbackPath, &buffer) == 0);
+    
+	FILE *fpFeedback = fopen(feedbackPath, "w");
+    if (!fpFeedback) {
+        printf("\nError opening feedback file for writing!\n");
+        return;
+    }
+	
+	char today[20];
+    getTodayDate(today);
+	
+    fprintf(fpFeedback, "----------------------------------------\n");
+    fprintf(fpFeedback, "Date: %s\n", today);
+    fprintf(fpFeedback, "Doctor Incharge: Dr. %s %s\n", docFirstName, docLastName);
+    fprintf(fpFeedback, "Feedback:\n");
+
+    while (1) {
+        fgets(feedback, sizeof(feedback), stdin);
+        feedback[strcspn(feedback, "\n")] = 0;  // Remove newline
+
+        if (strcmp(feedback, "END") == 0) {
+            break;
+        }
+        fprintf(fpFeedback, "%s\n", feedback);
+    }
+
+    fprintf(fpFeedback, "\n");
+    fclose(fpFeedback);
+
+    printf("\nFeedback saved successfully!\n");
+    printf("Press any key to return...\n");
+    getch();
+}
+

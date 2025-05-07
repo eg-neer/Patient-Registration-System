@@ -4,3 +4,4 @@ Jems,Trazona,jemsaries@gmail.com,09772935797,jems,1234,Cebu City,Male,2005-10-05
 Remus,Dayonot,remusdayonot@gmail.com,09610522493,remusdynt,pyrks,Valladolid City,Male,1975-05-13,clairedynt
 Myrns,Dayonot,myrks@gmail.com,09610522493,myrks,1234,Bacsije Carcar City,Female,0977-03-29,clairedynt
 Shan ,Wabinga,shan@gmail.com,09772935797,shannida,ambot,Tuyom City,Female,2004-07-17,egneer
+Chucky,Ebesa,chuckyhuhu@gmail.com,09772935797,chucky,6789,Cebu City,M,2004-09-01,egneer

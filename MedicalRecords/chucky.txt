@@ -1,0 +1,20 @@
+Patient Name: Chucky Ebesa
+Date of Last Update: 07/05/2025
+Gender: M
+Date of Birth: 2004-09-01
+Primary Doctor: Dr. Elle Bernante (Pediatrics)
+
+Childhood Illnesses:
+1. Asthma
+2. Chickenpox
+
+List of Medical Problems:
+1. Mild Kidney Failure
+
+Surgeries:
+2005, Appendicitis, Chung Hua
+
+Allergies to Medications:
+
+Current Medications:
+1. Paracetamol
